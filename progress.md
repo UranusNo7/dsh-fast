@@ -177,3 +177,24 @@
 - `progress.md`：追加本轮安装与上传状态。
 
 回滚方式：从 `packages/bundle/base/package.json` 删除策略依赖；从 `packages/bundle/base/cordis.patch.yml` 删除 `llm-model-policy` 注释和禁用行；恢复 base bundle 双语 README 及 `README.i18n.yaml` 旧内容；重新运行 `pnpm install --lockfile-only --ignore-scripts --offline` 和 `gen-doc-graphs`，再运行 `verify-cordis-config`、`pnpm run typecheck`。
+
+## 2026-08-17 - Task: 完成源码 bundle 安装并上传 GitHub
+
+### What was done
+
+完成源码 bundle 的默认禁用安装，并将完整 workspace 上传到用户确认的 Public GitHub 仓库。由于 `github.com:443` 的 Git smart-HTTP 连接持续失败，改用 GitHub Git Database API；远端 `main` 已指向提交 `c5a7745c7faa757c9a446bd43a003c495ea9171f`，上传 7433 个 blob 文件，远端 tree 与上传前本地提交 tree `3e68abd1a1d400b5649a9b43f9907e823b47cd23` 一致。
+
+### Testing
+
+- GitHub REST 校验：仓库为 Public、默认分支为 `main`；远端 ref、commit message、父提交和 tree 均可读取。
+- GitHub recursive tree 校验：7433 个 blob 文件，与本地 `git ls-tree -r HEAD` 数量一致。
+- `pnpm run typecheck`：安装 bundle 依赖后的源码构建 exit 0；`verify-cordis-config`、`gen-doc-graphs --check`、`verify-translation-pairing` 均通过。
+- 直接 `git push -u origin main` 两次因 GitHub Git endpoint 网络连接失败；API 上传过程出现 HTTP 503，但重试后完成。没有绕过真实代码测试，也没有修改 packaged desktop core。
+
+### Notes
+
+改动文件清单：
+
+- `progress.md`：追加 GitHub 上传成功的远端提交、tree 和文件数记录。
+
+回滚方式：本地源代码不受远端提交影响；如需撤销发布，在 GitHub 仓库设置中删除 `UranusNo7/dsh-llm-model-policy`，或保留仓库并删除/替换 `main` 分支内容。不要执行本地工作区的破坏性 reset。
