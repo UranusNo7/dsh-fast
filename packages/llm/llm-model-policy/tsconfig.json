@@ -9,7 +9,13 @@
   ],
   "references": [
     {
+      "path": "../../core/agent"
+    },
+    {
       "path": "../../attachment/attachment"
+    },
+    {
+      "path": "../../interaction/commands"
     },
     {
       "path": "../../../vendor/cordis"
@@ -22,6 +28,9 @@
     },
     {
       "path": "../../llm/llm-pi-ai"
+    },
+    {
+      "path": "../../core/session"
     },
     {
       "path": "../../runtime-diagnostics/invariants"

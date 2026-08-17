@@ -316,6 +316,9 @@ export interface ToolSchema {
   parameters: Record<string, unknown>
 }
 
+/** Provider-neutral service tiers accepted by adapters that expose request-level tier selection. */
+export type LlmServiceTier = 'auto' | 'default' | 'flex' | 'scale' | 'priority' | 'fast'
+
 /** A single model request, fully assembled. */
 export interface GenerateOptions {
   /** Registered provider route selecting the adapter instance. */
@@ -323,6 +326,8 @@ export interface GenerateOptions {
   model: string
   /** Adapter-owned reasoning effort selected for this exact model. */
   reasoningEffort?: ReasoningEffortId
+  /** Provider-neutral service tier selected for this request. */
+  serviceTier?: LlmServiceTier
   /**
    * Ordered conversation messages, exactly as the provider sees them (after
    * the `system` slot). A loop-built request assembles them as

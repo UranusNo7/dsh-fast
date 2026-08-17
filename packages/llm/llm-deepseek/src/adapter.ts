@@ -212,6 +212,12 @@ export class DeepSeekAdapter extends LlmAdapter {
   }
 
   async * stream(options: GenerateOptions): AsyncIterable<StreamChunk> {
+    if (options.serviceTier !== undefined) {
+      throw new LlmError(
+        `DeepSeek adapter does not support service tier "${options.serviceTier}"`,
+        'UNSUPPORTED_OPTION',
+      )
+    }
     // One resolution per stream call: connection facts and the credential
     // freeze here and hold for this whole request, so an in-flight stream
     // never observes a configuration change and the next call re-resolves.

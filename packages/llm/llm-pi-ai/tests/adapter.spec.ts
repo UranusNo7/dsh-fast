@@ -119,6 +119,38 @@ describe('PiAiAdapter provider routing', () => {
     expect(server.requests[0]).toMatchObject({ service_tier: 'priority' })
   })
 
+  it('maps a request-level Fast override without changing the profile', async () => {
+    const server = await mockServer([{ events: textEvents }])
+    const ctx = await harness(server.url)
+
+    await assemble(ctx, { model: 'deepseek-v4-flash', messages: [], serviceTier: 'fast' })
+
+    expect(server.requests[0]).toMatchObject({ service_tier: 'priority' })
+  })
+
+  it('rejects a request-level tier on a non-OpenAI protocol before network I/O', async () => {
+    const server = await mockServer([])
+    const ctx = new Context()
+    await ctx.plugin(LlmRuntime)
+    ctx.llm.registerAdapter(['acme'], adapterOf({
+      acme: {
+        api: 'anthropic-messages',
+        baseURL: server.url,
+        models: [{ id: 'acme-large', name: 'Acme Large' }],
+      },
+    }))
+
+    const result = await assemble(ctx, {
+      provider: 'acme',
+      model: 'acme-large',
+      messages: [],
+      serviceTier: 'fast',
+    })
+
+    expect(result.finish).toMatchObject({ kind: 'error', failure: { code: 'UNSUPPORTED_OPTION' } })
+    expect(server.requests).toEqual([])
+  })
+
   it('uses a dynamic request effort and reports unsupported efforts before network I/O', async () => {
     const server = await mockServer([{ events: textEvents }, { events: textEvents }])
     const ctx = await harness(server.url, { reasoning: 'max' })

@@ -57,6 +57,20 @@ function adapterOf(config: Partial<LlmDeepSeek.Config> & { apiKey?: string } = {
 }
 
 describe('DeepSeekAdapter against a mock server', () => {
+  it('rejects service tiers before network I/O', async () => {
+    const server = await mockServer([])
+    const ctx = await harness(server.url)
+
+    const result = await assemble(ctx, {
+      model: 'deepseek-v4-flash',
+      messages: [],
+      serviceTier: 'fast',
+    })
+
+    expect(result.finish).toMatchObject({ kind: 'error', failure: { code: 'UNSUPPORTED_OPTION' } })
+    expect(server.requests).toEqual([])
+  })
+
   it('streams a text generation end to end through the assembler', async () => {
     const server = await mockServer([{ kind: 'sse', events: textEvents }])
     const ctx = await harness(server.url)

@@ -2,7 +2,8 @@
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
-import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
+import type { Session, SessionEvent } from '@deepseek-ai/dsh-session'
+import type { InvariantFailure, InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
 const PACKAGE_NAME = '@deepseek-ai/dsh-llm-model-policy'
 
@@ -11,11 +12,28 @@ export const name = 'llm-model-policy-invariant'
 /** Service required before the companion can reserve package ownership. */
 export const inject = ['invariants']
 
-/**
- * No runtime invariant: the plugin owns only an effect-bound LLM adapter registration;
- * registry lifecycle is enforced by `LlmRuntime`.
- */
-const install: InvariantInstaller = () => {}
+/** Validate one durable Fast-mode event at the session log boundary. */
+function validateFast(event: SessionEvent<'model-policy/fast'>, fail: InvariantFailure): void {
+  if (typeof event.data.active !== 'boolean') fail('model-policy/fast active must be boolean')
+}
+
+/** Validate every Fast-mode event already present in one loaded session. */
+function validateSession(session: Session, fail: InvariantFailure): void {
+  for (const event of session.events) {
+    if (event.type === 'model-policy/fast') validateFast(event, fail)
+  }
+}
+
+/** Install validation for loaded and newly appended Fast-mode records. */
+const install: InvariantInstaller = Object.assign((ctx: Context, fail: InvariantFailure) => {
+  for (const session of ctx.sessions.list()) validateSession(session, fail)
+  ctx.on('session/created', (session) => { validateSession(session, fail) }, { global: true })
+  ctx.on('internal/dispatch', (_mode, eventName, args) => {
+    if (eventName !== 'session/event') return
+    const [, event] = args as [Session, SessionEvent]
+    if (event.type === 'model-policy/fast') validateFast(event, fail)
+  }, { global: true })
+}, { inject: ['sessions'] })
 
 /**
  * Register this package's invariant companion.

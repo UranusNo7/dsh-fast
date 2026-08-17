@@ -32,8 +32,10 @@ export interface ModelPolicyModel {
   input?: PiAiModality[]
   /** Logical reasoning policy. */
   reasoning?: ModelPolicyReasoning
-  /** Logical OpenAI-compatible service tier. */
+  /** Logical OpenAI-compatible service tier used when no session override exists. */
   serviceTier?: PiAiServiceTier
+  /** Whether the session `/fast` command may select Fast for this logical model. */
+  supportsFast?: boolean
   /** Physical candidates for this logical model. */
   routes: ModelPolicyRoute[]
 }
@@ -54,6 +56,7 @@ export interface ResolvedModelPolicy {
   input: readonly PiAiModality[]
   reasoning: ModelPolicyReasoning
   serviceTier?: PiAiServiceTier
+  supportsFast: boolean
   routes: readonly ResolvedModelPolicyRoute[]
 }
 

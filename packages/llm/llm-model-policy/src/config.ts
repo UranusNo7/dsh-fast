@@ -46,6 +46,7 @@ const model = z.object({
   input: z.array(z.union(POLICY_MODALITIES)).default(['text']),
   reasoning,
   serviceTier: z.union(PI_AI_SERVICE_TIERS),
+  supportsFast: z.boolean().default(false),
   routes: z.array(route).required(),
 })
 
@@ -101,6 +102,7 @@ export function resolveConfig(config: Config): ResolvedConfig {
         allowed,
       },
       ...source.serviceTier === undefined ? {} : { serviceTier: source.serviceTier },
+      supportsFast: source.supportsFast ?? false,
       routes,
     })
   }

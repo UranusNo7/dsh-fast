@@ -95,6 +95,27 @@ describe('ModelPolicyAdapter', () => {
     })
   })
 
+  it('selects the request-level service tier for physical routes', async () => {
+    const physical = new FakePhysicalAdapter(
+      { 'primary/gpt': info('primary', 'gpt', ['text']) },
+      { primary: [{ type: 'finish', reason: { kind: 'stop' } }] },
+    )
+    const tiers: unknown[] = []
+    const adapter = new ModelPolicyAdapter(config({
+      gpt: {
+        routes: [{ provider: 'primary', model: 'gpt' }],
+      },
+    }), (tier) => {
+      tiers.push(tier)
+      return physical as unknown as PiAiAdapter
+    })
+
+    for await (const _chunk of adapter.stream({ ...request(), serviceTier: 'fast' })) { /* drain */ }
+
+    expect(tiers).toEqual(['fast'])
+    expect(physical.calls[0]?.serviceTier).toBe('fast')
+  })
+
   it('excludes text-only routes from image requests', async () => {
     const physical = new FakePhysicalAdapter(
       {

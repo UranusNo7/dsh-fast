@@ -496,6 +496,19 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 
 来源：[`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src/types.ts)
 
+### `model-policy/*`
+
+<a id="model-policyfast--log-only"></a>
+
+#### `model-policy/fast` — log-only
+
+```ts persistence-catalog
+/** Durable session selection for the logical model policy Fast mode. */
+'model-policy/fast': { active: boolean }
+```
+
+来源：[`packages/llm/llm-model-policy/src/fast.ts:8`](../packages/llm/llm-model-policy/src/fast.ts)
+
 ### `permission/*`
 
 <a id="permissionpreset--log-only"></a>

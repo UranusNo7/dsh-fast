@@ -105,9 +105,9 @@ function profileOptions(
   reasoning: ModelThinkingLevel | undefined,
   apiKey: string | undefined,
   modelApi: string,
+  serviceTier: PiAiServiceTier | undefined,
 ): SimpleStreamOptions {
   const enabledReasoning: ThinkingLevel | undefined = reasoning === 'off' ? undefined : reasoning
-  const serviceTier = profile.serviceTier
   return {
     ...apiKey === undefined ? {} : { apiKey },
     ...enabledReasoning === undefined ? {} : { reasoning: enabledReasoning },
@@ -315,9 +315,10 @@ export class PiAiAdapter extends LlmAdapter {
       model,
       options.reasoningEffort ?? profile.reasoning,
     )
-    if (profile.serviceTier !== undefined && !SERVICE_TIER_APIS.has(model.api)) {
+    const serviceTier = options.serviceTier ?? profile.serviceTier
+    if (serviceTier !== undefined && !SERVICE_TIER_APIS.has(model.api)) {
       throw new LlmError(
-        `pi-ai model "${model.id}" uses API "${model.api}", which does not support service tier "${profile.serviceTier}"`,
+        `pi-ai model "${model.id}" uses API "${model.api}", which does not support service tier "${serviceTier}"`,
         'UNSUPPORTED_OPTION',
       )
     }
@@ -343,7 +344,7 @@ export class PiAiAdapter extends LlmAdapter {
         ? toPiContext(options)
         : await toPiContext(options, attachments)
       const events = snapshot.models.streamSimple(model, context, {
-        ...profileOptions(profile, reasoning, apiKey, model.api),
+        ...profileOptions(profile, reasoning, apiKey, model.api, serviceTier),
         ...options.temperature === undefined ? {} : { temperature: options.temperature },
         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },

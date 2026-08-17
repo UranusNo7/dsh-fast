@@ -192,7 +192,8 @@ export class ModelPolicyAdapter extends LlmAdapter {
         'UNSUPPORTED_REASONING_EFFORT',
       )
     }
-    const physical = this.physicalAdapterForTier(policy.serviceTier)
+    const serviceTier = options.serviceTier ?? policy.serviceTier
+    const physical = this.physicalAdapterForTier(serviceTier)
     const candidates = await candidatesFor(physical, policy, options.signal)
     const eligible = candidates.filter((candidate) => {
       if (containsImage && !candidate.info.inputModalities?.includes('image')) return false
@@ -237,7 +238,7 @@ export class ModelPolicyAdapter extends LlmAdapter {
         for await (const chunk of physical.stream(request)) {
           if (chunk.type === 'finish') {
             if (chunk.reason.kind === 'error' && !started && index + 1 < eligible.length
-              && retryableFailure(chunk.reason.failure, policy.serviceTier)) {
+              && retryableFailure(chunk.reason.failure, serviceTier)) {
               lastError = chunk.reason.failure
               pending.length = 0
               break
@@ -257,7 +258,7 @@ export class ModelPolicyAdapter extends LlmAdapter {
         }
         if (index + 1 >= eligible.length) return
       } catch (error: unknown) {
-        if (!started && index + 1 < eligible.length && retryableError(error, policy.serviceTier)) {
+        if (!started && index + 1 < eligible.length && retryableError(error, serviceTier)) {
           lastError = error
           continue
         }

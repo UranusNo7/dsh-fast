@@ -12,8 +12,12 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { Context } from '@deepseek-ai/cordis'
 import Loader from '@deepseek-ai/cordis-plugin-loader'
 import Include from '@deepseek-ai/cordis-plugin-include'
-import LlmRuntime from '@deepseek-ai/dsh-llm'
+import type { Agent } from '@deepseek-ai/dsh-agent'
+import { agentEvents } from '@deepseek-ai/dsh-agent'
+import Commands from '@deepseek-ai/dsh-commands'
 import CredentialsLocal from '@deepseek-ai/dsh-credentials-local'
+import LlmRuntime from '@deepseek-ai/dsh-llm'
+import SessionStore, { SessionId } from '@deepseek-ai/dsh-session'
 import * as ModelPolicy from '@deepseek-ai/dsh-llm-model-policy'
 import { closeMockServers, mockServer, textEvents } from '../../llm-pi-ai/tests/mock-server.ts'
 
@@ -36,10 +40,14 @@ async function loadComposition(config: string): Promise<Context> {
   await writeFile(configPath, [
     '- id: llm',
     "  name: 'test-llm-service'",
+    '- id: sessions',
+    "  name: '@deepseek-ai/dsh-session'",
     '- id: credentials',
     "  name: '@deepseek-ai/dsh-credentials-local'",
     '  config:',
     `    path: ${JSON.stringify(credentialPath)}`,
+    '- id: commands',
+    "  name: '@deepseek-ai/dsh-commands'",
     '- id: llm-model-policy',
     "  name: '@deepseek-ai/dsh-llm-model-policy'",
     '  config:',
@@ -54,6 +62,8 @@ async function loadComposition(config: string): Promise<Context> {
   ctx.loader.builtins.include = Include
   const modules = new Map<string, unknown>([
     ['test-llm-service', LlmRuntime],
+    ['@deepseek-ai/dsh-session', SessionStore],
+    ['@deepseek-ai/dsh-commands', Commands],
     ['@deepseek-ai/dsh-credentials-local', CredentialsLocal],
     ['@deepseek-ai/dsh-llm-model-policy', ModelPolicy],
   ])
@@ -97,11 +107,26 @@ describe('llm-model-policy real Loader composition', () => {
     const server = await mockServer([{ events: textEvents }])
     const ctx = await loadComposition(routeConfig(server.url, [
       'maxTokens: 512',
+      'supportsFast: true',
       'serviceTier: fast',
       'routes:',
       '  - provider: primary',
       '    model: gpt',
     ].join('\n')))
+    const session = ctx.sessions.create(SessionId('composition-fast'))
+    const agent = {
+      id: session.id,
+      options: { provider: 'gpt-policy', model: 'gpt-5.6' },
+      session,
+    } as unknown as Agent
+    await expect(ctx.commands.execute(agent, '/fast', new AbortController().signal)).resolves.toMatchObject({
+      result: { kind: 'success', text: 'Fast mode enabled for this session.' },
+    })
+    await expect(agentEvents(ctx, agent).waterfall(
+      'agent/request',
+      { turn: 1, step: 1, signal: new AbortController().signal },
+      () => Promise.resolve({ provider: 'gpt-policy', model: 'gpt-5.6' }),
+    )).resolves.toMatchObject({ serviceTier: 'fast' })
 
     const chunks = []
     for await (const chunk of ctx.llm.stream({

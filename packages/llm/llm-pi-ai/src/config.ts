@@ -20,7 +20,7 @@ import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
 import { resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
+import type { LlmServiceTier, ResolvedRetryPolicy, RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
 import { MODALITIES, resolveRouteModels, SUPPORTED_THINKING_FORMATS, THINKING_LEVELS } from './catalog.ts'
 import type {
   PiAiCompatProfile,
@@ -55,7 +55,7 @@ export const DEFAULT_INPUT: readonly PiAiModality[] = ['text']
 /** Service tiers understood by OpenAI-compatible pi-ai request payloads. */
 export const PI_AI_SERVICE_TIERS = ['auto', 'default', 'flex', 'scale', 'priority', 'fast'] as const
 /** One configured service-tier value accepted by a pi-ai route profile. */
-export type PiAiServiceTier = typeof PI_AI_SERVICE_TIERS[number]
+export type PiAiServiceTier = LlmServiceTier
 
 export type {
   PiAiCompatProfile,

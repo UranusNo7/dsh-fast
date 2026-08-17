@@ -577,7 +577,7 @@ describe('request stability across the loop', () => {
     await waitForIdle(ctx, agent)
     ctx.systemPrompt.section({ name: 'extra', order: 2, text: 'now with guidance' })
     ctx.on('agent/request', async (_payload, next) => ({
-      ...await next(), temperature: 0.5, maxTokens: 99, stop: ['<END>'],
+      ...await next(), serviceTier: 'fast', temperature: 0.5, maxTokens: 99, stop: ['<END>'],
     }))
     send(agent, 'again')
     await waitForIdle(ctx, agent)
@@ -602,8 +602,10 @@ describe('request stability across the loop', () => {
       // Header: the latest request/header snapshot up to this step's dispatch
       // (its header event sits between step/start and the first chunk).
       const header = foldRequestHeader(events.slice(0, firstChunk.seq))!
+      expect(request.provider).toBe(header.config.provider)
       expect(request.model).toBe(header.config.model)
       expect(request.reasoningEffort).toBe(header.config.reasoningEffort)
+      expect(request.serviceTier).toBe(header.config.serviceTier)
       expect(request.system).toEqual(header.system)
       expect(structuredClone(request.tools ?? [])).toEqual(structuredClone(header.tools ?? []))
       expect(request.temperature).toBe(header.config.temperature)

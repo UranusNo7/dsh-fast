@@ -98,7 +98,7 @@ profile 的 `models` 列表是*替换*该路由已安装 catalog，而不是扩�
 
 ### Service tier
 
-`serviceTier` 是 OpenAI 兼容 pi-ai API 的显式请求选项。`fast` 是当前 OpenAI `priority` 值对应的 Harness 别名；`default`、`auto`、`flex`、`scale` 和 `priority` 原样传递。适配器通过 pi-ai 的 `onPayload` hook 注入 `service_tier`，遇到非 OpenAI 模型时以 `UNSUPPORTED_OPTION` 拒绝，而不是静默丢弃字段。
+`serviceTier` 是 OpenAI 兼容 pi-ai API 的显式请求选项。请求级 `GenerateOptions.serviceTier` 会覆盖本次调用 profile 的静态 `serviceTier`；省略时保留 profile 值。`fast` 是当前 OpenAI `priority` 值对应的 Harness 别名；`default`、`auto`、`flex`、`scale` 和 `priority` 原样传递。适配器通过 pi-ai 的 `onPayload` hook 注入 `service_tier`，遇到非 OpenAI 模型时以 `UNSUPPORTED_OPTION` 拒绝，而不是静默丢弃字段。
 
 路由完全无法服务时解析仍会失败得响亮，并点名出问题的路由与模型：catalog 未提供的路由需要 `api`、`baseURL`，以及一个由唯一标识的模型组成的非空 `models` 列表。该解析在分节 schema 内部运行，因此无法服务的 profile 会在**写入之处**被拒绝——`settings.mutate` 以 `settings-rejected` 点名路由与模型——而不是先存下来、再悄悄让该 namespace 下每条路由失效。对于已经存下的、在此失败的分节，settings seam 会保留该 namespace 上一份可用值，因此这不会把部署卡死。`api` 接受 `supportedProtocols()` 中的协议，且仅在 catalog 无法提供协议时才需要：catalog 中不存在的模型会继承其同门模型一致同意的协议，因此向单协议 catalog 路由添加模型无需重述任何内容。
 

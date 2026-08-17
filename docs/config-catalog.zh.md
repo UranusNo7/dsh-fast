@@ -897,7 +897,7 @@ export interface DeepSeekCatalogModel {
 
 ## `@deepseek-ai/dsh-llm-model-policy`
 
-需要：`llm`
+需要：`llm` · `commands`
 
 ```ts config-catalog
 /** Configuration for the logical model provider plugin. */
@@ -924,8 +924,10 @@ export interface ModelPolicyModel {
   input?: PiAiModality[]
   /** Logical reasoning policy. */
   reasoning?: ModelPolicyReasoning
-  /** Logical OpenAI-compatible service tier. */
+  /** Logical OpenAI-compatible service tier used when no session override exists. */
   serviceTier?: PiAiServiceTier
+  /** Whether the session `/fast` command may select Fast for this logical model. */
+  supportsFast?: boolean
   /** Physical candidates for this logical model. */
   routes: ModelPolicyRoute[]
 }
@@ -1119,7 +1121,7 @@ export interface PiAiCompatProfile {
 export type PiAiModality = Model<Api>['input'][number]
 
 /** One configured service-tier value accepted by a pi-ai route profile. */
-export type PiAiServiceTier = typeof PI_AI_SERVICE_TIERS[number]
+export type PiAiServiceTier = LlmServiceTier
 
 /**
  * Selectable reasoning efforts for one model: each key is a level the model
@@ -1144,7 +1146,7 @@ type PiThinkingFormat = NonNullable<OpenAICompletionsCompat['thinkingFormat']>
 type WithheldThinkingFormat = 'chat-template' | 'qwen-chat-template'
 ```
 
-依赖：`Api`（`@earendil-works/pi-ai`）· `CacheRetention`（`@earendil-works/pi-ai`）· `Model`（`@earendil-works/pi-ai`）· `ModelThinkingLevel`（`@earendil-works/pi-ai`）· `OpenAICompletionsCompat`（`@earendil-works/pi-ai`）· [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets`（`@earendil-works/pi-ai`）· `Transport`（`@earendil-works/pi-ai`）
+依赖：`Api`（`@earendil-works/pi-ai`）· `CacheRetention`（`@earendil-works/pi-ai`）· [`LlmServiceTier`](../packages/llm/llm/src/index.ts) · `Model`（`@earendil-works/pi-ai`）· `ModelThinkingLevel`（`@earendil-works/pi-ai`）· `OpenAICompletionsCompat`（`@earendil-works/pi-ai`）· [`RetryPolicyConfig`](../packages/llm/llm/src/index.ts) · `ThinkingBudgets`（`@earendil-works/pi-ai`）· `Transport`（`@earendil-works/pi-ai`）
 
 来源：[`packages/llm/llm-pi-ai/src/config.ts:179`](../packages/llm/llm-pi-ai/src/config.ts)
 

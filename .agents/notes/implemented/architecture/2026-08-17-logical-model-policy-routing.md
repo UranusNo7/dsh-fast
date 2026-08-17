@@ -18,9 +18,9 @@ The logical adapter returns exact logical model metadata. Its context window is 
 
 ### Keep unified policy at the logical model
 
-A logical model declares `input`, `maxTokens`, `reasoning.allowed`, `reasoning.default`, `serviceTier`, and ordered routes. Configuration rejects duplicate physical candidates and a default reasoning level outside the logical allowed list. Load-time validation requires every declared image or non-off reasoning capability to exist on at least one physical candidate; request-time selection filters candidates again for the actual image and reasoning request.
+A logical model declares `input`, `maxTokens`, `reasoning.allowed`, `reasoning.default`, an optional default `serviceTier`, explicit `supportsFast` capability, and ordered routes. Configuration rejects duplicate physical candidates and a default reasoning level outside the logical allowed list. Load-time validation requires every declared image or non-off reasoning capability to exist on at least one physical candidate; request-time selection filters candidates again for the actual image and reasoning request. Session-level Fast semantics are recorded in the [GPT Fast mode note](2026-08-17-gpt-fast-session-mode.md).
 
-`serviceTier: fast` maps to `service_tier: priority` in the reused pi-ai adapter. Other supported tier values are sent to OpenAI-compatible pi-ai APIs, while an incompatible protocol fails with `UNSUPPORTED_OPTION` rather than dropping the field. This wire-specific mapping stays in `dsh-llm-pi-ai`, which exports the profile schema, profile resolver, service-tier vocabulary, and per-request credential resolver for composition.
+A configured `serviceTier: fast` or the session-level `fast` override maps to `service_tier: priority` in the reused pi-ai adapter. Other supported tier values are sent to OpenAI-compatible pi-ai APIs, while an incompatible protocol fails with `UNSUPPORTED_OPTION` rather than dropping the field. This wire-specific mapping stays in `dsh-llm-pi-ai`, which exports the profile schema, profile resolver, service-tier vocabulary, and per-request credential resolver for composition.
 
 ### Preserve replay and image safety across routes
 
@@ -32,12 +32,12 @@ The logical adapter buffers non-content chunks and retries the next eligible can
 
 ## Testing
 
-Package tests cover logical metadata, reasoning intersection, image-capability filtering, pre-output failover, and replay-safe request mapping. A real Loader composition boots a test-only `cordis.yml`, registers the logical provider, verifies the Fast wire field and logical token cap, and exercises failover between two local mock gateways. The pi-ai adapter tests cover the public profile exports and Fast mapping on its OpenAI-compatible request path.
+Package tests cover logical metadata, reasoning intersection, image-capability filtering, pre-output failover, replay-safe request mapping, GPT-only Fast commands, durable request-header changes, and plugin disposal. A real Loader composition boots a test-only `cordis.yml`, mounts sessions and commands, executes `/fast`, verifies the request middleware and Fast wire field, and exercises failover between two local mock gateways. The pi-ai adapter tests cover the public profile exports and both static and request-level Fast mapping on its OpenAI-compatible request path.
 
 ## Alternatives considered
 
 - **Put logical models and failover in `LlmRuntime`** — rejected because the core seam should retain physical route ownership and remain useful without deployment-specific policy or pi-ai.
-- **Add service tier to the shared `GenerateOptions` wire vocabulary** — rejected because the option is provider-specific; the logical policy maps it through the pi-ai payload hook and rejects protocols that cannot carry it.
+- **Map provider-neutral service tiers in the core LLM runtime** — rejected because the core carries only the provider-neutral `LlmServiceTier` value; protocol spelling and unsupported-protocol validation remain in the pi-ai adapter, while the logical policy owns the session capability decision.
 - **Use `agent/request-error` for candidate failover** — rejected because this policy must decide before partial output can be exposed, while agent recovery owns durable failed steps and later turns. Retrying after content would require a response-splicing protocol that has no safe consumer.
 - **Union every candidate's image and reasoning capabilities** — rejected because the logical catalog would overclaim a route that the selected physical model cannot serve. A logical capability is retained only when configuration and candidate metadata justify it.
 - **Mutate the frozen `llm/stream` request to switch candidates** — rejected because request objects can be deep-frozen and route choice belongs to the adapter's detached physical request copy.
@@ -58,3 +58,4 @@ Package tests cover logical metadata, reasoning intersection, image-capability f
 - [Request-level LLM config credentials](2026-07-29-request-level-llm-config-credentials.md) owns per-request credential references reused by the physical profiles.
 - [Pi-ai route default input modalities](2026-08-12-pi-ai-route-default-input-modalities.md) owns explicit physical input capability declarations.
 - [Bounded recovery for transient LLM request failures](2026-06-21-bounded-llm-request-recovery.md) remains authoritative for same-route agent recovery; this note adds the separate logical adapter exception for pre-output candidate selection.
+- [Session-scoped GPT Fast mode](2026-08-17-gpt-fast-session-mode.md) owns durable Fast intent, GPT capability gating, and request-header application.
