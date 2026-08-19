@@ -12,7 +12,7 @@ The LLM seam exposes physical `provider` and `model` routes, while deployments m
 
 ### Use an opt-in logical provider plugin
 
-`@deepseek-ai/dsh-llm-model-policy` registers one logical provider through `ctx.llm.registerAdapter()`. Its configuration owns logical model ids and ordered `{ provider, model }` candidates, while its nested physical profiles reuse the public profile schema and credential resolver from `dsh-llm-pi-ai`. The package is not mounted by shipped defaults; a composition opts in by mounting the plugin and selecting its logical provider and model.
+`@deepseek-ai/dsh-codex-model-policy` registers one logical provider through `ctx.llm.registerAdapter()`. Its configuration owns logical model ids and ordered `{ provider, model }` candidates, while its nested physical profiles reuse the public profile schema and credential resolver from `dsh-llm-pi-ai`. The package is not mounted by shipped defaults; a composition opts in by mounting the plugin and selecting its logical provider and model.
 
 The logical adapter returns exact logical model metadata. Its context window is the configured logical value or the smallest declared candidate window, and its output cap is the logical `maxTokens` value. The physical adapter remains responsible for provider catalog resolution, protocol conversion, credentials, attachments, response conversion, and stream lifecycle.
 
@@ -32,7 +32,7 @@ The logical adapter buffers non-content chunks and retries the next eligible can
 
 ## Testing
 
-Package tests cover logical metadata, reasoning intersection, image-capability filtering, pre-output failover, replay-safe request mapping, GPT-only Fast commands, durable request-header changes, and plugin disposal. A real Loader composition boots a test-only `cordis.yml`, mounts sessions and commands, executes `/fast`, verifies the request middleware and Fast wire field, and exercises failover between two local mock gateways. The pi-ai adapter tests cover the public profile exports and both static and request-level Fast mapping on its OpenAI-compatible request path.
+Package tests cover logical metadata, reasoning intersection, image-capability filtering, pre-output failover, replay-safe request mapping, GPT-only Fast controller commits, durable request-header changes, and plugin disposal. A real Loader composition boots a test-only `cordis.yml`, mounts sessions and credentials, calls the Fast controller, verifies the request middleware and Fast wire field, and exercises failover between two local mock gateways. The pi-ai adapter tests cover the public profile exports and both static and request-level Fast mapping on its OpenAI-compatible request path; the Host and browser model-selection tests cover the optional catalog state and switch bridge.
 
 ## Alternatives considered
 

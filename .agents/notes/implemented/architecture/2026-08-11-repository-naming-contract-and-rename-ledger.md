@@ -290,7 +290,7 @@ Keep atomic-write, brand, native-command, timeout utility, directory-picker, `ds
 | `LocaleService` | `LocaleRuntime` | The object coordinates locale definitions, selection, persistence, and change publication. |
 | `ThemeService` | `ThemeRuntime` | The object coordinates themes, preference resolution, system sensing, and change publication. |
 | `LayoutService` | `LayoutController` | The object controls the current UI layout state. |
-| `@deepseek-ai/dsh-client-ui-model` | `@deepseek-ai/dsh-client-ui-model-selection` | The package controls the model selection for a session. The singular `model` name is too broad. |
+| `@deepseek-ai/dsh-client-ui-model`, `@deepseek-ai/dsh-client-ui-model-selection`, `@deepseek-ai/dsh-llm-model-policy` | `@deepseek-ai/dsh-codex-model-policy` | The package combines session model selection with the opt-in Codex-compatible logical routing and Fast policy. |
 | `ModelService`, `ctx.models` | `ModelDirectoryResolver`, `ctx.modelDirectories` | Its only public operation, `directoryFor(sessionId)`, resolves and retains one directory per live session. It has no registration API, so `Registry` would be false. Each `ModelDirectory` remains the consumer-facing catalog of selectable models. |
 | `SettingsScopeService` | `SettingsScopeBinder` | Its sole operation binds one namespace specification to the caller's transport and lifecycle and returns a `SettingsScopeController`. Keep `ctx.settingsScope`; it names the singular binding capability, not a collection of scopes. |
 | `@deepseek-ai/dsh-client-ui-models` | `@deepseek-ai/dsh-client-ui-settings-models` | This package owns the Models settings panel. Keep `ModelsSettingsStore`; it holds one settings view model with data operations and subscriptions and is a real store. |

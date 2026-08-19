@@ -507,7 +507,7 @@ export type SessionEvent<T extends SessionEventType = SessionEventType> = {
 'model-policy/fast': { active: boolean }
 ```
 
-来源：[`packages/llm/llm-model-policy/src/fast.ts:8`](../packages/llm/llm-model-policy/src/fast.ts)
+来源：[`packages/llm/codex-model-policy/src/fast.ts:8`](../packages/llm/codex-model-policy/src/fast.ts)
 
 ### `permission/*`
 

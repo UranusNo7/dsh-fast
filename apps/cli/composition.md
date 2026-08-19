@@ -42,8 +42,8 @@ flowchart LR
   cfg --> plugin_dsh_base_credentials
   plugin_dsh_base_llm_pi_ai["llm-pi-ai<br/>@deepseek-ai/dsh-llm-pi-ai"]
   cfg --> plugin_dsh_base_llm_pi_ai
-  plugin_dsh_base_llm_model_policy["llm-model-policy<br/>@deepseek-ai/dsh-llm-model-policy"]
-  cfg --> plugin_dsh_base_llm_model_policy
+  plugin_dsh_base_codex_model_policy["codex-model-policy<br/>@deepseek-ai/dsh-codex-model-policy"]
+  cfg --> plugin_dsh_base_codex_model_policy
   plugin_dsh_base_session_persistence_jsonl["session-persistence-jsonl<br/>@deepseek-ai/dsh-session-persistence-jsonl"]
   cfg --> plugin_dsh_base_session_persistence_jsonl
   plugin_dsh_base_attachment_local["attachment-local<br/>@deepseek-ai/dsh-attachment-local"]
@@ -187,7 +187,7 @@ flowchart LR
 | `settings` | `@deepseek-ai/dsh-settings-file` |
 | `credentials` | `@deepseek-ai/dsh-credentials-local` |
 | `llm-pi-ai` | `@deepseek-ai/dsh-llm-pi-ai` |
-| `llm-model-policy` | `@deepseek-ai/dsh-llm-model-policy` |
+| `codex-model-policy` | `@deepseek-ai/dsh-codex-model-policy` |
 | `session-persistence-jsonl` | `@deepseek-ai/dsh-session-persistence-jsonl` |
 | `attachment-local` | `@deepseek-ai/dsh-attachment-local` |
 | `session-query-sqlite` | `@deepseek-ai/dsh-session-query-sqlite` |

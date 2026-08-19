@@ -505,7 +505,7 @@ Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src
 'model-policy/fast': { active: boolean }
 ```
 
-Source: [`packages/llm/llm-model-policy/src/fast.ts:8`](../packages/llm/llm-model-policy/src/fast.ts)
+Source: [`packages/llm/codex-model-policy/src/fast.ts:8`](../packages/llm/codex-model-policy/src/fast.ts)
 
 ### `permission/*`
 

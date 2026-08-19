@@ -141,14 +141,25 @@ async function detailsTrack(page: Page): Promise<number> {
 // Readiness gate: `dsh web` serves every production manifest plugin; until every UI
 // plugin's client bundle exists and exports apply, the loader fail-louds and
 // the frame never appears.
-const UI_PLUGIN_DIRS = [
-  'connection', 'runtime', 'ui-theme', 'locale', 'ui-layout', 'ui-sidebar',
-  'ui-settings', 'ui-settings-general', 'ui-settings-models', 'ui-conversation',
-  'ui-model-selection', 'ui-user-questions', 'ui-trajectory', '../session-query/session-log-export',
+const UI_PLUGIN_BUNDLES = [
+  'packages/client/connection/lib/client.js',
+  'packages/client/runtime/lib/client.js',
+  'packages/client/ui-theme/lib/client.js',
+  'packages/client/locale/lib/client.js',
+  'packages/client/ui-layout/lib/client.js',
+  'packages/client/ui-sidebar/lib/client.js',
+  'packages/client/ui-settings/lib/client.js',
+  'packages/client/ui-settings-general/lib/client.js',
+  'packages/client/ui-settings-models/lib/client.js',
+  'packages/client/ui-conversation/lib/client.js',
+  'packages/llm/codex-model-policy/lib/client.js',
+  'packages/client/ui-user-questions/lib/client.js',
+  'packages/client/ui-trajectory/lib/client.js',
+  'packages/session-query/session-log-export/lib/client.js',
 ]
 const ROUND_DONE_MARKER = 'WEB_ROUND_DONE'
-const notReady = UI_PLUGIN_DIRS.filter((dir) => {
-  const bundle = join(REPO_ROOT, 'packages/client', dir, 'lib/client.js')
+const notReady = UI_PLUGIN_BUNDLES.filter((relativePath) => {
+  const bundle = join(REPO_ROOT, relativePath)
   return !existsSync(bundle) || !readFileSync(bundle, 'utf8').includes('exports.apply')
 })
 if (notReady.length > 0) console.warn(`[smoke-real] skipped — client bundles not ready: ${notReady.join(', ')}`)

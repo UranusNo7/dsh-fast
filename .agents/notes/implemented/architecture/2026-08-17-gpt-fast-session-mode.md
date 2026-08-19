@@ -10,7 +10,7 @@ The logical model policy needs an opt-in Fast mode that applies to later request
 
 ## Decision
 
-`@deepseek-ai/dsh-llm-model-policy` registers `/fast`, `/fast off`, and `/fast status` through `@deepseek-ai/dsh-commands`. `/fast` appends `model-policy/fast: { active: true }`, `/fast off` appends the corresponding false event, and `/fast status` folds the latest event without changing the log. The command enables Fast only when the current logical model declares `supportsFast: true`; this is an explicit capability rather than a model-id naming rule.
+`@deepseek-ai/dsh-codex-model-policy` provides an optional `modelPolicy` controller for the Host model-selection API. The controller appends `model-policy/fast: { active }` only after an accepted session-level toggle, reports whether the selected logical model supports Fast, and enables it only when that model declares `supportsFast: true`; this is an explicit capability rather than a model-id naming rule. The user-facing control is the Web model selector's Fast switch, not a slash command.
 
 The package listens on the global `agent/request` waterfall and calls `next()` before applying the folded session state. Active Fast adds `serviceTier: 'fast'` to the effective logical call configuration. An active mode on a model without `supportsFast` fails with `UNSUPPORTED_OPTION`; disabling the mode remains available so a session can recover after model selection changes. The inactive state removes a request-level tier override, or supplies `default` when it must suppress a configured logical default tier.
 
@@ -18,7 +18,7 @@ The package listens on the global `agent/request` waterfall and calls `next()` b
 
 ## Testing
 
-Package tests cover command parsing, durable event folding, GPT-only rejection, request-level tier selection, Fast wire mapping, and plugin disposal. A real Loader composition mounts sessions, commands, credentials, LLM, and the logical policy from a test-only `cordis.yml`; it executes `/fast`, dispatches `agent/request`, and verifies the effective tier before a local mock provider request. The loop integration records Fast and its removal in successive `request/header` events.
+Package tests cover controller commits, durable event folding, GPT-only rejection, request-level tier selection, Fast wire mapping, and plugin disposal. A real Loader composition mounts sessions, credentials, LLM, and the logical policy from a test-only `cordis.yml`; it calls the controller, dispatches `agent/request`, and verifies the effective tier before a local mock provider request. Host API tests and the browser model-selection tests cover the optional state and shared Fast switch, while the loop integration records Fast and its removal in successive `request/header` events.
 
 ## Alternatives considered
 
@@ -31,12 +31,13 @@ Package tests cover command parsing, durable event folding, GPT-only rejection, 
 ## Consequences
 
 - Fast is session-local, durable across resume, and visible to the next model request without adding prompt text.
-- A logical model must opt in with `supportsFast: true`; non-GPT models cannot accidentally receive the priority tier through the command.
+- A logical model must opt in with `supportsFast: true`; non-GPT models cannot accidentally receive the priority tier through the model-selection controller.
 - The core LLM call vocabulary gains one provider-neutral service-tier field, while each adapter remains responsible for support and wire conversion.
 - A session with Fast active must disable it before selecting a logical model that does not support Fast; request middleware rejects the unsafe combination instead of silently dropping the preference.
 
 ## Related
 
 - [Logical cross-provider model policy routing](2026-08-17-logical-model-policy-routing.md) owns the logical provider, route ordering, capability filtering, and pre-output failover.
+- [GPT Fast model-selection control](../feature/2026-08-18-gpt-fast-model-selection-control.md) owns the Host API and Web UI bridge for the session-level switch.
 - [Reconstructable requests](2026-07-05-reconstructable-requests.md) owns the request-header rule that makes effective model-visible configuration durable.
 - [Provider-routed LLM adapters](2026-07-14-provider-routed-llm-adapters.md) owns physical provider route ownership and pi-ai replay conversion.

@@ -37,7 +37,7 @@ import type { PresetBearingSession } from '@deepseek-ai/dsh-agent-presets'
 import type {} from '@deepseek-ai/dsh-tools'
 import type {
   ApiProxy, ConfigurableProviderView, CredentialView, GoalRef, HistoryEntry, HostFrame,
-  ModelCatalogFailure, ModelProviderGroup,
+  ModelCatalogFailure, ModelPolicyFastState, ModelProviderGroup,
   ModelReasoning, MuxFrame, PromptContentPart, QuestionResponsePayload, SessionListMetadata, SessionProjectionsBlock, SessionSearchItem,
   QueuedInboxItem, SessionSummary, SettingsNamespaceView, SubagentAddress, JobView, ToolEventView,
   WorkspaceId, WorkspaceView,
@@ -353,6 +353,7 @@ async function buildModelCatalog(ctx: Context): Promise<{
           name: model.name,
           ...model.description === undefined ? {} : { description: model.description },
           ...reasoning === undefined ? {} : { reasoning },
+          ...resolved.supportsFast === undefined ? {} : { supportsFast: resolved.supportsFast },
         }
       }))
       const group: ModelProviderGroup = {
@@ -374,6 +375,16 @@ async function buildModelCatalog(ctx: Context): Promise<{
     groups: catalog.flatMap(item => item.kind === 'group' ? [item.group] : []).filter(group => group.models.length > 0),
     failures: catalog.flatMap(item => item.kind === 'failure' ? [item.failure] : []),
   }
+}
+
+/** Optional Host bridge supplied by the logical model policy plugin. */
+interface ModelPolicyController {
+  getFast(agent: Agent, selection: Pick<ModelSelection, 'provider' | 'model'>): ModelPolicyFastState
+  setFast(agent: Agent, selection: Pick<ModelSelection, 'provider' | 'model'>, active: boolean): ModelPolicyFastState
+}
+
+function modelPolicyFor(ctx: Context): ModelPolicyController | undefined {
+  return ctx.get('modelPolicy') as ModelPolicyController | undefined
 }
 
 /** Wrap an error result echoing the request's rpcId. */
@@ -2276,11 +2287,18 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         const current = selectionFor(found.agent).current
         const { groups, failures } = await buildModelCatalog(ctx)
         const routable = routeServed(current.provider)
-        return ok(request, { current: { ...current }, routable, groups, failures })
+        const fast = modelPolicyFor(ctx)?.getFast(found.agent, current)
+        return ok(request, {
+          current: { ...current },
+          ...fast === undefined ? {} : { fast },
+          routable,
+          groups,
+          failures,
+        })
       },
 
       async selectModel(request) {
-        const { sessionId, provider, model, reasoningEffort } = request.payload
+        const { sessionId, provider, model, reasoningEffort, fast } = request.payload
         const found = await agentFor(sessionId)
         if ('error' in found) return err(request, found.error)
         return serializeImageAdmission(found.agent, async () => {
@@ -2311,6 +2329,15 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
                 ? {}
                 : { reasoningEffort: resolved.reasoningEffort },
             }
+            const policy = modelPolicyFor(ctx)
+            if (fast !== undefined && policy === undefined) {
+              throw new Error('Fast mode is unavailable in this deployment.')
+            }
+            const fastState = policy === undefined
+              ? undefined
+              : fast === undefined
+                ? policy.getFast(found.agent, selected)
+                : policy.setFast(found.agent, selected, fast)
             selectionFor(found.agent).current = selected
             try {
               await defaults.saveDefaultModelSelection?.(selected)
@@ -2319,7 +2346,10 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
                 `api-proxy: the model switch applies to this session but was not saved as the default: ${String(error)}`,
               )
             }
-            return ok(request, { selected: { ...selected } })
+            return ok(request, {
+              selected: { ...selected },
+              ...fastState === undefined ? {} : { fast: fastState },
+            })
           } catch (error: unknown) {
             return err(request, {
               code: 'model-unavailable',

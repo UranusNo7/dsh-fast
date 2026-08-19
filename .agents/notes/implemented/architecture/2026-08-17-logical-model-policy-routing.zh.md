@@ -12,7 +12,7 @@ LLM seam 暴露的是物理 `provider` 和 `model` 路由，但部署可能需�
 
 ### 使用可选的逻辑提供方插件
 
-`@deepseek-ai/dsh-llm-model-policy` 通过 `ctx.llm.registerAdapter()` 注册一个逻辑提供方。它的配置拥有逻辑模型 id 和有序 `{ provider, model }` 候选路由，同时复用 `dsh-llm-pi-ai` 公开的 profile schema 和凭据解析器。该包不由已发布的默认组合挂载；组合只有在显式挂载插件并选择逻辑提供方和模型时才启用它。
+`@deepseek-ai/dsh-codex-model-policy` 通过 `ctx.llm.registerAdapter()` 注册一个逻辑提供方。它的配置拥有逻辑模型 id 和有序 `{ provider, model }` 候选路由，同时复用 `dsh-llm-pi-ai` 公开的 profile schema 和凭据解析器。该包不由已发布的默认组合挂载；组合只有在显式挂载插件并选择逻辑提供方和模型时才启用它。
 
 逻辑适配器返回精确的逻辑模型元数据。上下文窗口使用配置的逻辑值，或候选路由中已声明的最小窗口；输出上限使用逻辑 `maxTokens`。物理适配器仍负责提供方 catalog 解析、协议转换、凭据、附件、响应转换和流生命周期。
 
@@ -32,7 +32,7 @@ LLM seam 暴露的是物理 `provider` 和 `model` 路由，但部署可能需�
 
 ## 测试
 
-包测试覆盖逻辑元数据、思考能力交集、图片能力筛选、内容前故障切换、安全的回放请求映射、GPT-only Fast 命令、持久化 request-header 变化和插件释放。真实 Loader 组合会启动测试专用 `cordis.yml`，挂载 sessions 和 commands，执行 `/fast`，验证 request middleware 和 Fast wire 字段，并在两个本地 mock 网关之间执行故障切换。pi-ai 适配器测试覆盖公开 profile 导出，以及 OpenAI 兼容请求路径上的静态和请求级 Fast 映射。
+包测试覆盖逻辑元数据、思考能力交集、图片能力筛选、内容前故障切换、安全的回放请求映射、GPT-only Fast 控制器提交、持久化 request-header 变化和插件释放。真实 Loader 组合会启动测试专用 `cordis.yml`，挂载 sessions 和 credentials，调用 Fast 控制器，验证 request middleware 和 Fast wire 字段，并在两个本地 mock 网关之间执行故障切换。pi-ai 适配器测试覆盖公开 profile 导出，以及 OpenAI 兼容请求路径上的静态和请求级 Fast 映射；Host 与浏览器模型选择测试覆盖可选目录状态及开关桥接。
 
 ## 考虑过的替代方案
 

@@ -198,3 +198,90 @@
 - `progress.md`：追加 GitHub 上传成功的远端提交、tree 和文件数记录。
 
 回滚方式：本地源代码不受远端提交影响；如需撤销发布，在 GitHub 仓库设置中删除 `UranusNo7/dsh-llm-model-policy`，或保留仓库并删除/替换 `main` 分支内容。不要执行本地工作区的破坏性 reset。
+
+## 2026-08-19 - Task: Rename and consolidate the Codex model-policy plugin
+
+### What was done
+
+- 将 Host 逻辑路由、Fast 模式和 Browser 模型选择合并为 `@deepseek-ai/dsh-codex-model-policy`，统一到 `packages/llm/codex-model-policy/`，保留 logical routing、`model-policy/fast` 持久化事件、跨提供方故障切换、共享 per-session directory 和 Agent preset 行为。
+- 为 Browser 目录补齐 Host Fast 状态投影、共享目录上的 `session.selectModel({ fast })` 提交、GPT-only Fast 控件及不支持模型上的关闭恢复路径；Host 与 Browser 组合行使用独立的 `codex-model-policy` 和 `codex-model-policy-client` id。
+- 更新 workspace bundle、TypeScript aggregate、锁文件、Host API、LLM 类型、生成目录与双语 package/docs；补充发布包 invariant、Loader composition、Host API、Browser composition、Fast UI 与 legacy physical route coverage，并写入对应 Agent Note。
+- 将 GitHub 仓库从 `UranusNo7/dsh-llm-model-policy` 重命名为 `UranusNo7/dsh-codex-model-policy`，验证远端后更新 `origin`；未修改 `D:\DSHDesktop\DSH Desktop\resources\app.asar.unpacked\`。
+
+### Testing
+
+- `pnpm exec vitest run packages/llm/codex-model-policy/tests --reporter=dot`：5 files、31 tests 通过。
+- `pnpm run test:gui`：270 files、3741 tests 通过，1 skipped。
+- `pnpm run typecheck`：Host build 与 Client aggregate typecheck 通过；另以 `pnpm exec tsc -b packages/llm/codex-model-policy/tsconfig.host.json packages/llm/codex-model-policy/tsconfig.client.json --pretty false` 复核两张发布面。
+- `pnpm --filter @deepseek-ai/dsh-codex-model-policy bundle` 与 tarball audit 通过，包含 `lib/index.js`、`lib/client.js`、`lib/invariant.js`、`lib/types/**/*.js` 和 declaration files。
+- 生成器 freshness、translation pairing（939 对）、doc-typecheck、README Model Experience、package invariants、built invariants、constraints、Markdown/link/docs gates 均通过；`verify-client-domain-graph` 仍报告 27 个既有 ui-conversation/ui-input-trigger/runtime 跨域问题，未改动无关域。
+
+### Notes
+
+改动文件清单：
+
+- `packages/llm/codex-model-policy/`：合并后的 Host/Browser 源码、配置、README、tsconfig、bundle 配置和测试。
+- `packages/client/ui-model-selection/`：删除旧 Browser 包及其源文件、元数据和残留构建目录。
+- `packages/llm/llm-model-policy/`：迁移并重命名为 Codex policy 包。
+- `packages/host/apiproxy/`、`packages/llm/llm/`、`packages/client/connection/`、`packages/api/remotes/`：Fast/session model wire contract and service-tier changes.
+- `packages/bundle/`、`tsconfig.base.json`、`tsconfig.host.json`、`tsconfig.client.json`、`vitest.config.ts`、`pnpm-lock.yaml`：composition, project references and dependency graph updates.
+- `apps/cli/composition.md`、`apps/web/tests/`、`docs/`、`packages/*/README*`：regenerated catalogs, graph references and bilingual package documentation.
+- `.agents/notes/implemented/`：updated active naming/model notes and added the Fast model-selection control note.
+- `scripts/check-workspace-constraints.ts`：allows the explicitly standalone-published Codex plugin repository while retaining canonical repository checks for other DSH packages.
+- `progress.md`：本条任务记录。
+
+回滚方式：不执行全量 reset；按上述迁移清单逐项恢复旧 package 路径、bundle/tsconfig/lockfile/docs 生成物和 Agent Note 配对哈希，移除 `scripts/check-workspace-constraints.ts` 中的 Codex repository override，删除 `packages/llm/codex-model-policy/` 的新文件并恢复 `packages/client/ui-model-selection/` 与 `packages/llm/llm-model-policy/`。如需撤销外部仓库改名，执行 `gh repo rename dsh-llm-model-policy --repo UranusNo7/dsh-codex-model-policy --yes` 后将 `origin` 设回 `https://github.com/UranusNo7/dsh-llm-model-policy.git`。
+
+## 2026-08-19 - Task: Write the public repository README
+
+### What was done
+
+- 将根目录 README 定位为独立 Codex model-policy 插件仓库的公开入口，说明项目作用、适用条件、安装方式、profile 配置、Host/Browser 双入口、Fast 模式、跨提供方路由、故障切换和源码开发流程。
+- 同步维护中英文 README，并保留包级 README 作为完整 schema、API、模型体验和限制的详细来源。
+- 修正 README 中的源码运行锚点、插件包安装链接和双语链接结构，补充 npm 包、仓库和文档入口。
+
+### Testing
+
+- `node --import tsx/esm scripts/verify-translation-pairing.ts`：939 组双语文档配对通过。
+- `node --import tsx/esm scripts/verify-md-links.ts`：1899 个文件的相对链接和 fragment 通过。
+- `node --import tsx/esm scripts/verify-md-wrap.ts`：1862 个文件无硬换行段落。
+- `node --import tsx/esm scripts/verify-public-repository-links.ts`、`verify-doc-refs.ts`、`verify-doc-budgets.ts`：均通过。
+- `git diff --check`：通过。
+- `pnpm run doc-sync` 与直接 `node --import tsx/esm scripts/run-gates.ts doc-sync` 仍受当前 Windows pnpm 包装器缺少 `npm_execpath` 的环境问题阻断；对应文档叶级检查已直接运行并通过。
+
+### Notes
+
+改动文件清单：
+
+- `README.md`：新增英文项目说明、安装配置、运行、Fast/路由语义和开发命令。
+- `README.zh.md`：新增中文项目说明、安装配置、运行、Fast/路由语义和开发命令。
+- `README.i18n.yaml`：记录中英文 README 的最新一致性哈希。
+- `progress.md`：追加本轮文档任务记录。
+
+回滚方式：恢复上述三个 README 文件与 `progress.md` 到本轮修改前的版本；不需要修改插件源码、bundle 配置或 packaged desktop core。
+
+## 2026-08-19 - Task: Finalize README examples and bilingual links
+
+### What was done
+
+- 将 README 的运行章节补齐源码运行入口和 `#run` 锚点，避免覆盖既有文档引用。
+- 删除自定义组合示例中的不完整 YAML 占位配置，改为明确要求同时加载 Host 与 Browser 两行，并复用完整 Host 配置示例。
+- 对齐中英文 README 的结构链接，使语言切换、插件文档、CLI、架构和安装指南的相对链接均可解析且保持配对规则。
+
+### Testing
+
+- `node --import tsx/esm scripts/verify-translation-pairing.ts`：939 组通过。
+- `node --import tsx/esm scripts/verify-md-links.ts`：1899 个文件通过。
+- `node --import tsx/esm scripts/verify-md-wrap.ts`：1862 个文件通过。
+- `git diff --check`：通过。
+
+### Notes
+
+改动文件清单：
+
+- `README.md`：补充运行锚点并修正自定义组合说明。
+- `README.zh.md`：同步中文运行锚点和自定义组合说明。
+- `README.i18n.yaml`：重新记录配对哈希。
+- `progress.md`：追加本轮收尾记录。
+
+回滚方式：恢复上述文件到本轮收尾前版本；不需要修改插件源码、bundle 配置或 packaged desktop core。

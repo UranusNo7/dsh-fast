@@ -47,6 +47,10 @@ const repositoryUrl = 'git+https://github.com/deepseek-harness/deepseek-harness.
  * their trusted publishing against the repository that runs the workflow.
  */
 const publishedRepositoryUrl = 'git+https://github.com/deepseek-ai/deepseek-harness.git'
+/** Published packages intentionally maintained in a standalone plugin repository. */
+const publishedRepositoryOverrides: Readonly<Record<string, string>> = {
+  '@deepseek-ai/dsh-codex-model-policy': 'git+https://github.com/UranusNo7/dsh-codex-model-policy.git',
+}
 /** Directories whose packages this repository publishes: one release member each. */
 const releaseMemberDirectory = /^(?:packages\/[^/]+\/[^/]+|apps\/[^/]+|vendor\/[^/]+)$/
 
@@ -257,10 +261,11 @@ function checkWorkspace({ dir, manifest }: WorkspaceManifest): string[] {
     if (manifest.publishConfig?.access !== 'public') {
       errors.push(`${label}: release member must set publishConfig.access to "public"`)
     }
+    const expectedPublishedRepository = publishedRepositoryOverrides[manifest.name ?? ''] ?? publishedRepositoryUrl
     if (manifest.repository?.type !== 'git'
-      || manifest.repository.url !== publishedRepositoryUrl
+      || manifest.repository.url !== expectedPublishedRepository
       || manifest.repository.directory !== dir) {
-      errors.push(`${label}: release member repository must use ${publishedRepositoryUrl} with directory ${dir}`)
+      errors.push(`${label}: release member repository must use ${expectedPublishedRepository} with directory ${dir}`)
     }
   } else if (manifest.private !== true) {
     errors.push(`${label}: package.json must set "private": true`)

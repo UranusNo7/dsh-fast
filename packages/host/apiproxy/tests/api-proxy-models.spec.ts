@@ -375,6 +375,42 @@ describe('Web session model selection', () => {
     await ctx.fiber.dispose()
   })
 
+  it('round-trips optional model-policy Fast state through session model RPCs', async () => {
+    const { ctx, sessionId } = await harness()
+    let active = false
+    ctx.provide('modelPolicy', {
+      getFast: (_agent: Agent, selection: { provider: string; model: string }) => ({
+        active,
+        available: selection.provider === 'deepseek-official',
+      }),
+      setFast: (agent: Agent, selection: { provider: string; model: string }, next: boolean) => {
+        if (next && selection.provider !== 'deepseek-official') throw new Error('Fast unavailable')
+        active = next
+        agent.session.append('request/header', {
+          header: { config: { provider: selection.provider, model: selection.model } },
+          reason: 'initial',
+        })
+        return { active, available: selection.provider === 'deepseek-official' }
+      },
+    })
+    const api = createApiProxy(ctx, {
+      defaultModelSelection: () => ({ provider: 'deepseek-official', model: 'deepseek-chat' }),
+      cwd: '/tmp',
+    })
+
+    expect(expectValue(await api.sessions.models(request({ sessionId }))).fast)
+      .toEqual({ active: false, available: true })
+    expect(expectValue(await api.sessions.selectModel(request({
+      sessionId,
+      provider: 'deepseek-official',
+      model: 'deepseek-chat',
+      fast: true,
+    }))).fast).toEqual({ active: true, available: true })
+    expect(expectValue(await api.sessions.models(request({ sessionId }))).fast)
+      .toEqual({ active: true, available: true })
+    await ctx.fiber.dispose()
+  })
+
   it('reads the Agent default live for a session whose log names no selection', async () => {
     const { ctx, sessionId } = await harness()
     let stored = { provider: 'deepseek-official', model: 'deepseek-chat' }

@@ -247,8 +247,8 @@
       name: '@deepseek-ai/dsh-client-ui-message-feedback'
 
     # Model selection: the /model popupSelect + composer seat over session.models.
-    - id: ui-model-selection
-      name: '@deepseek-ai/dsh-client-ui-model-selection'
+    - id: codex-model-policy-client
+      name: '@deepseek-ai/dsh-codex-model-policy'
 
     - id: ui-permission
       name: '@deepseek-ai/dsh-client-ui-permission-presets'

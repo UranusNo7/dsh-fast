@@ -290,7 +290,7 @@ PascalCase 标识符中的首字母缩略词使用首字母大写格式：`Ui`�
 | `LocaleService` | `LocaleRuntime` | 该对象协调区域设置定义、选择、持久化和变更发布。 |
 | `ThemeService` | `ThemeRuntime` | 该对象协调主题、偏好解析、系统感知和变更发布。 |
 | `LayoutService` | `LayoutController` | 该对象控制当前 UI 布局状态。 |
-| `@deepseek-ai/dsh-client-ui-model` | `@deepseek-ai/dsh-client-ui-model-selection` | 该包控制会话的模型选择。单数 `model` 名称作用域过宽。 |
+| `@deepseek-ai/dsh-client-ui-model`、`@deepseek-ai/dsh-client-ui-model-selection`、`@deepseek-ai/dsh-llm-model-policy` | `@deepseek-ai/dsh-codex-model-policy` | 该包将会话模型选择与可选的 Codex 兼容逻辑路由和 Fast 策略合并。 |
 | `ModelService`, `ctx.models` | `ModelDirectoryResolver`, `ctx.modelDirectories` | 它唯一的公开操作 `directoryFor(sessionId)` 为每个实时会话解析并保留一个目录。它没有注册 API，因此使用 `Registry` 并不准确。每个 `ModelDirectory` 仍是面向消费方的可选模型目录。 |
 | `SettingsScopeService` | `SettingsScopeBinder` | 它唯一的操作把一份命名空间规范绑定到调用方的传输层和生命周期，并返回 `SettingsScopeController`。保留 `ctx.settingsScope`；它命名的是单一绑定能力，而不是 scope 集合。 |
 | `@deepseek-ai/dsh-client-ui-models` | `@deepseek-ai/dsh-client-ui-settings-models` | 该包拥有 Models 设置面板。保留 `ModelsSettingsStore`；它保存一个具有数据操作和订阅能力的设置视图模型，确实是存储。 |

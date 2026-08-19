@@ -170,7 +170,7 @@ export function apply(ctx: Context): void {
   const inputHub = new InputHub(ctx, t)
 
   // The composer-block registry: a plugin that knows a session cannot send —
-  // ui-model-selection, when no adapter serves the session's route — raises a block
+  // codex-model-policy, when no adapter serves the session's route — raises a block
   // here, and the bar reads its own session's store. It cannot flow the other
   // way: this package must not import the plugins that would know.
   const composerBlocks = new ComposerBlockRegistry()

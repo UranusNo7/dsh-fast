@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-17-gpt-fast-session-mode.md
-2026-08-17-gpt-fast-session-mode.md: b3715583d08b947762b28b35d5e180627f5f959b
-2026-08-17-gpt-fast-session-mode.zh.md: ba8c47e611c3060f5bf00e5e744a409a70d4d971
+2026-08-17-gpt-fast-session-mode.md: 5a7bfdb6ac8d0e4b0830b7938a1ca417b49f3dbb
+2026-08-17-gpt-fast-session-mode.zh.md: 3dc3903d544e151545caf8e840f8de46b1ff4378

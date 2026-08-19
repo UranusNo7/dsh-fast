@@ -126,6 +126,16 @@ export interface ModelCatalogModel {
   description?: string
   /** Exact-route reasoning metadata when the adapter exposes it. */
   reasoning?: ModelReasoning
+  /** Whether the selected model accepts the session's Fast mode. */
+  supportsFast?: boolean
+}
+
+/** Session-local Fast mode state supplied by an optional model policy plugin. */
+export interface ModelPolicyFastState {
+  /** Whether the durable Fast event is active for this session. */
+  active: boolean
+  /** Whether the current provider/model route supports Fast. */
+  available: boolean
 }
 
 /** One provider and the models it advertised successfully. */
@@ -152,6 +162,8 @@ export interface ModelCatalogFailure {
 export interface SessionModels {
   /** Model selection for the session's next assembled step. */
   current: ModelSelection
+  /** Optional model-policy Fast state; absent when that plugin is not mounted. */
+  fast?: ModelPolicyFastState
   /**
    * Whether an adapter currently serves `current.provider`, and therefore
    * whether this session can start a turn at all. Deliberately NOT derivable
@@ -291,15 +303,17 @@ export interface SessionsApi {
   /**
    * Selects the complete model selection for this session. Exact model metadata
    * validates an optional reasoning effort, while catalog membership remains
-   * advisory. Session-backed subagents reject with `agent-busy`.
+   * advisory. An optional Fast value is committed by the mounted model-policy
+   * controller. Session-backed subagents reject with `agent-busy`.
    */
   selectModel(request: RpcRequest<{
     sessionId: SessionId
     provider: string
     model: string
     reasoningEffort?: string
+    fast?: boolean
   }>):
-  Promise<RpcResponse<{ selected: ModelSelection }>>
+  Promise<RpcResponse<{ selected: ModelSelection; fast?: ModelPolicyFastState }>>
 
   /**
    * Renames a session: appends a `session/title` event with the `user`

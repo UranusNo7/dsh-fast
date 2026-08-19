@@ -98,8 +98,8 @@
     # Cross-provider logical model policies are installed but opt-in: enabling
     # this row requires a policy config with at least one logical model and its
     # physical pi-ai candidates, so the empty base composition stays unchanged.
-    - id: llm-model-policy
-      name: '@deepseek-ai/dsh-llm-model-policy'
+    - id: codex-model-policy
+      name: '@deepseek-ai/dsh-codex-model-policy'
       disabled: true
 
     - id: session-persistence-jsonl

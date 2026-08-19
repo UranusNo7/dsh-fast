@@ -584,6 +584,7 @@ describe('LlmRuntime', () => {
         return Promise.resolve({
           provider: 'route', id: 'model', name: 'Model',
           inputModalities: ['text', 'image'],
+          supportsFast: true,
         })
       }
     }(SCRIPT)
@@ -594,6 +595,7 @@ describe('LlmRuntime', () => {
     await expect(ctx.llm.resolveModelInfo('route', 'model')).resolves.toEqual({
       provider: 'route', id: 'model', name: 'Model',
       inputModalities: ['text', 'image'],
+      supportsFast: true,
     })
   })
 

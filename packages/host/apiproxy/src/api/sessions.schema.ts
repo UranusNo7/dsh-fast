@@ -11,7 +11,7 @@ import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
 import type { RequestPayload, ResponseValue } from './rpc-map.ts'
 import type { Wire } from './rpc.schema.ts'
 import type {
-  HistoryEntry, ModelCatalogFailure, ModelCatalogModel, ModelProviderGroup, ModelReasoning,
+  HistoryEntry, ModelCatalogFailure, ModelCatalogModel, ModelPolicyFastState, ModelProviderGroup, ModelReasoning,
   ModelReasoningEffort, ModelSelection, SessionListMetadata, SessionProjectionsBlock, SessionSearchItem, SessionSummary,
 } from './sessions.ts'
 import type { ToolEventView } from './events.ts'
@@ -152,6 +152,12 @@ export const modelSelectionSchema = z.object({
   reasoningEffort: z.string().min(1).optional(),
 }) satisfies z.ZodType<Wire<ModelSelection>>
 
+/** Optional Fast-mode state contributed by the logical model policy plugin. */
+export const modelPolicyFastStateSchema = z.object({
+  active: z.boolean(),
+  available: z.boolean(),
+}) satisfies z.ZodType<Wire<ModelPolicyFastState>>
+
 /** One adapter-owned reasoning effort. */
 export const modelReasoningEffortSchema = z.object({
   id: z.string().min(1),
@@ -171,6 +177,7 @@ export const modelCatalogModelSchema = z.object({
   name: z.string().min(1),
   description: z.string().optional(),
   reasoning: modelReasoningSchema.optional(),
+  supportsFast: z.boolean().optional(),
 }) satisfies z.ZodType<Wire<ModelCatalogModel>>
 
 /** One successfully loaded provider group. */
@@ -249,6 +256,7 @@ export const sessionModelsRequestSchema = z.object({
 /** session.models response value. */
 export const sessionModelsValueSchema = z.object({
   current: modelSelectionSchema,
+  fast: modelPolicyFastStateSchema.optional(),
   routable: z.boolean(),
   groups: z.array(modelProviderGroupSchema),
   failures: z.array(modelCatalogFailureSchema),
@@ -260,11 +268,13 @@ export const sessionSelectModelRequestSchema = z.object({
   provider: z.string().min(1),
   model: z.string().min(1),
   reasoningEffort: z.string().min(1).optional(),
+  fast: z.boolean().optional(),
 }) satisfies z.ZodType<Wire<RequestPayload<'session.selectModel'>>>
 
 /** session.selectModel response value. */
 export const sessionSelectModelValueSchema = z.object({
   selected: modelSelectionSchema,
+  fast: modelPolicyFastStateSchema.optional(),
 }) satisfies z.ZodType<Wire<ResponseValue<'session.selectModel'>>>
 
 /** ContentBlock passthrough: core is merge-extensible — the type discriminant envelope is strict, the rest stays wide. */

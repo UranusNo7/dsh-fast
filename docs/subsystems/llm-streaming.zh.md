@@ -407,6 +407,8 @@ interface LlmModelInfo {
   description?: string
   /** Accepted request modalities; absent means unknown, while an explicit omission is negative capability. */
   inputModalities?: readonly ModelModality[]
+  /** Optional adapter-declared support for the provider's Fast service tier. */
+  supportsFast?: boolean
 }
 ```
 

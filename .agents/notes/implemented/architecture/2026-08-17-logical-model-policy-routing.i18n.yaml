@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-08-17-logical-model-policy-routing.md
-2026-08-17-logical-model-policy-routing.md: b4ca605ed926f02ec78889773e75b8fc23f3bcd6
-2026-08-17-logical-model-policy-routing.zh.md: 7c4004c3cc8606e98024c693d02aa5d85596bd18
+2026-08-17-logical-model-policy-routing.md: 18ce3b8dd1db6790bb107b15c69ade5ce366990b
+2026-08-17-logical-model-policy-routing.zh.md: a07a121fec1e74554b00ebc2f82efdd23a7d47c0

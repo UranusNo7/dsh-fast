@@ -142,14 +142,15 @@
         "./packages/identity/*/src/invariant.ts",
         "./packages/test-support/*/src/invariant.ts"
       ],
-      // host/client package names prefix the group dir (dsh-client-<dir>), so
-      // the generic dsh-*/invariant list above cannot map them; strip the
-      // group prefix with a dedicated wildcard per group instead.
+      // Host/client package names include their group prefix (dsh-client-<dir>),
+      // so dedicated wildcards must strip that prefix before generic dsh-* paths
+      // can fall through to other groups such as test-support.
       "@deepseek-ai/dsh-host-*/invariant": ["./packages/host/*/src/invariant.ts"],
       "@deepseek-ai/dsh-client-*/invariant": ["./packages/client/*/src/invariant.ts"],
       "@deepseek-ai/dsh-headless/startup": ["./packages/bundle/headless/src/startup.ts"],
       "@deepseek-ai/dsh-web-app/startup": ["./packages/bundle/web-app/src/startup.ts"],
       "@deepseek-ai/dsh-client-*/client": ["./packages/client/*/src/client"],
+      "@deepseek-ai/dsh-client-*": ["./packages/client/*/src"],
        // One wildcard maps every @deepseek-ai/dsh-<name> to its source. Package
       // dir names are unique across groups, so first-on-disk-wins resolution is
       // unambiguous; adding a package under an existing group needs no edit
@@ -200,7 +201,8 @@
       "@deepseek-ai/dsh-client-ui-workflow-run": ["./packages/client/ui-workflow-run/src"],
       "@deepseek-ai/dsh-client-ui-input-trigger": ["./packages/client/ui-input-trigger/src"],
       "@deepseek-ai/dsh-client-ui-commands": ["./packages/client/ui-commands/src"],
-      "@deepseek-ai/dsh-client-ui-model-selection": ["./packages/client/ui-model-selection/src"],
+      "@deepseek-ai/dsh-codex-model-policy": ["./packages/llm/codex-model-policy/src"],
+      "@deepseek-ai/dsh-codex-model-policy/client": ["./packages/llm/codex-model-policy/src/client"],
       "@deepseek-ai/dsh-client-ui-goal": ["./packages/client/ui-goal/src"],
       "@deepseek-ai/dsh-client-ui-message-feedback": ["./packages/client/ui-message-feedback/src"],
       "@deepseek-ai/dsh-client-ui-agent-preset": ["./packages/client/ui-agent-preset/src"],
