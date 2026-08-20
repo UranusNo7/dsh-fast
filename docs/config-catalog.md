@@ -467,6 +467,68 @@ export interface Config {
 
 Source: [`packages/code-runtime/code-runtime-worker-thread/src/index.ts:25`](../packages/code-runtime/code-runtime-worker-thread/src/index.ts)
 
+<a id="deepseek-aidsh-codex-model-policy"></a>
+
+## `@deepseek-ai/dsh-codex-model-policy`
+
+Requires: `llm`
+
+```ts config-catalog
+/** Configuration for the logical model provider plugin. */
+export interface Config {
+  /** Registered logical provider id. */
+  providerId?: string
+  /** Human-readable logical provider name. */
+  displayName?: string
+  /** Physical pi-ai provider profiles keyed by route. */
+  providers?: Record<string, PiAiProviderProfile>
+  /** Logical models keyed by stable selector id. */
+  models?: Record<string, ModelPolicyModel>
+}
+
+/** One logical model and its ordered physical candidates. */
+export interface ModelPolicyModel {
+  /** Human-readable selector name. */
+  name?: string
+  /** Conservative logical context capacity. */
+  contextWindow?: number
+  /** Logical default output cap. */
+  maxTokens?: number
+  /** Logical input modalities. */
+  input?: PiAiModality[]
+  /** Logical reasoning policy. */
+  reasoning?: ModelPolicyReasoning
+  /** Logical OpenAI-compatible service tier used when no session override exists. */
+  serviceTier?: LlmServiceTier
+  /** Whether the session Fast control may select Fast for this logical model. */
+  supportsFast?: boolean
+  /** Physical candidates for this logical model. */
+  routes: ModelPolicyRoute[]
+}
+
+/** Unified reasoning choices exposed by one logical model. */
+export interface ModelPolicyReasoning {
+  /** Default reasoning level sent when the caller omits one. */
+  default?: string
+  /** Reasoning levels the logical model exposes. */
+  allowed?: string[]
+}
+
+/** One physical provider/model candidate for a logical model. */
+export interface ModelPolicyRoute {
+  /** Physical provider route key. */
+  provider: string
+  /** Physical model id on the provider route. */
+  model: string
+  /** Lower values are attempted first. */
+  priority?: number
+}
+```
+
+Depends on: [`LlmServiceTier`](../packages/llm/llm/src/index.ts) · [`PiAiModality`](../packages/llm/llm-pi-ai/src/index.ts) · [`PiAiProviderProfile`](../packages/llm/llm-pi-ai/src/index.ts)
+
+Source: [`packages/llm/codex-model-policy/src/config.ts:14`](../packages/llm/codex-model-policy/src/config.ts)
+
 <a id="deepseek-aidsh-compaction-basic"></a>
 
 ## `@deepseek-ai/dsh-compaction-basic`
@@ -3232,6 +3294,7 @@ These load from a `cordis.yml` entry with no `config:` block; they declare no co
 - `@deepseek-ai/dsh-command-goal` — requires `commands` · `goals` ([`packages/goal/command-goal/src/index.ts`](../packages/goal/command-goal/src/index.ts))
 - `@deepseek-ai/dsh-commands` ([`packages/interaction/commands/src/index.ts`](../packages/interaction/commands/src/index.ts))
 - `@deepseek-ai/dsh-cordis-client-runner` ([`packages/extensions/cordis-client-runner/src/index.ts`](../packages/extensions/cordis-client-runner/src/index.ts))
+- `@deepseek-ai/dsh-fast` — requires `llm` ([`packages/llm/fast/src/index.ts`](../packages/llm/fast/src/index.ts))
 - `@deepseek-ai/dsh-fs-e2b` — requires `e2b` ([`packages/e2b/fs-e2b/src/index.ts`](../packages/e2b/fs-e2b/src/index.ts))
 - `@deepseek-ai/dsh-fs-observation-policy` ([`packages/fs/fs-observation-policy/src/index.ts`](../packages/fs/fs-observation-policy/src/index.ts))
 - `@deepseek-ai/dsh-goal-round-driver` — requires `agents` · `goals` · `sessions` ([`packages/goal/goal-round-driver/src/index.ts`](../packages/goal/goal-round-driver/src/index.ts))

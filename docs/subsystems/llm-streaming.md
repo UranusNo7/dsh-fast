@@ -439,6 +439,8 @@ interface LlmModelInfo {
   description?: string
   /** Accepted request modalities; absent means unknown, while an explicit omission is negative capability. */
   inputModalities?: readonly ModelModality[]
+  /** Whether this model may be used with a Fast-tier request when that tier is active. Generic; Fast plugin augments the tier map. */
+  supportsFast?: boolean
 }
 ```
 
@@ -504,6 +506,8 @@ interface GenerateOptions {
   model: string
   /** Adapter-owned reasoning effort selected for this exact model. */
   reasoningEffort?: ReasoningEffortId
+  /** Provider-neutral service tier selected for this request. */
+  serviceTier?: LlmServiceTier
   /**
    * Ordered conversation messages, exactly as the provider sees them (after
    * the `system` slot). A loop-built request assembles them as
@@ -636,15 +640,16 @@ FIXME(call-config-shape): revisit which remaining fields are genuinely epoch-lev
 
 ```ts type-equiv
 /**
- * Provider, model, reasoning effort, and sampling scalars of one conversation's
- * requests. Every field maps 1:1 onto the same-named `GenerateOptions` field;
- * the loop builds requests from the logged header rather than accepting these
- * per call.
+ * Provider, model, reasoning effort, service tier, and sampling scalars of one
+ * conversation's requests. Every field maps 1:1 onto the same-named
+ * `GenerateOptions` field; the loop builds requests from the logged header rather
+ * than accepting these per call.
  */
 interface LlmCallConfig {
   provider: string
   model: string
   reasoningEffort?: ReasoningEffortId
+  serviceTier?: LlmServiceTier
   temperature?: number
   maxTokens?: number
   stop?: string[]

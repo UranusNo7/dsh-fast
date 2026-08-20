@@ -393,6 +393,19 @@ Types: [ContentBlock](subsystems/core.md) · [TokenUsage](subsystems/llm-streami
 
 Source: [`packages/compaction/compaction/src/types.ts:33`](../packages/compaction/compaction/src/types.ts)
 
+### `fast/*`
+
+<a id="fastmode--log-only"></a>
+
+#### `fast/mode` — log-only
+
+```ts persistence-catalog
+/** Durable session selection for Fast mode. */
+'fast/mode': { active: boolean }
+```
+
+Source: [`packages/llm/fast/src/fast.ts:18`](../packages/llm/fast/src/fast.ts)
+
 ### `feedback/*`
 
 <a id="feedbackrecord--log-only"></a>
@@ -505,11 +518,11 @@ Source: [`packages/llm/llm-retry/src/types.ts:11`](../packages/llm/llm-retry/src
 #### `model-policy/fast` — log-only
 
 ```ts persistence-catalog
-/** Durable session selection for the logical model policy Fast mode. */
+/** Legacy alias – folded identically to `fast/mode`. */
 'model-policy/fast': { active: boolean }
 ```
 
-Source: [`packages/llm/codex-model-policy/src/fast.ts:8`](../packages/llm/codex-model-policy/src/fast.ts)
+Source: [`packages/llm/fast/src/fast.ts:20`](../packages/llm/fast/src/fast.ts)
 
 ### `permission/*`
 

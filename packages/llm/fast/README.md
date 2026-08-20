@@ -34,6 +34,14 @@ The UI toggle in `dsh-codex-model-policy` remains the primary surface; the comma
 
 No config. The plugin is host-only and has no client half.
 
+## Model Experience
+
+The plugin adds no system prompt. It injects `serviceTier: 'fast'` through the `agent/request` waterfall when `fast/mode` is active, and advertises `supportsFast` through `LlmModelInfo` augmentation. The tier is part of `request/header` and thus participates in cache-prefix computation when toggled; the `fast/mode` event itself is log-only.
+
+#### Token and cache
+
+Toggling Fast changes the `serviceTier` field of the next `request/header`, so the assembled prefix from that point is distinct and the first request after a toggle misses the prior cache. Subsequent requests with the same tier reuse the cache normally; the `fast/mode` event carries no other weight.
+
 ## Known Limitations and Deferred Work
 
-UI for Fast is currently owned by `dsh-codex-model-policy`; a future standalone Fast UI could be split out.
+- UI for Fast is currently owned by `dsh-codex-model-policy`; a future standalone Fast UI could be split out.
