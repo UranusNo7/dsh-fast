@@ -8,8 +8,7 @@ import {
 } from '@deepseek-ai/dsh-llm'
 import type { LlmCallConfig } from '@deepseek-ai/dsh-llm'
 import type { LlmServiceTier } from '@deepseek-ai/dsh-llm'
-import { PiAiAdapter } from '@deepseek-ai/dsh-llm-pi-ai'
-import type { ResolvedPiAiProviderProfile } from '@deepseek-ai/dsh-llm-pi-ai'
+import { PiAiAdapter, resolveProfiles } from '@deepseek-ai/dsh-llm-pi-ai'
 import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
 import { profilesForServiceTier, resolveConfig } from './config.ts'
 import { ModelPolicyAdapter } from './adapter.ts'
@@ -60,9 +59,7 @@ function physicalAdapterFor(
     const existing = adapters.get(key)
     if (existing !== undefined) return existing
     const providers = profilesForServiceTier(config.providers, serviceTier)
-    const profiles = new Map<string, ResolvedPiAiProviderProfile>(
-      Object.entries(providers) as unknown as [string, ResolvedPiAiProviderProfile][],
-    )
+    const profiles = resolveProfiles(providers)
     const adapter = new PiAiAdapter({
       profiles: () => profiles,
       resolveApiKey: async (provider, profile) => {

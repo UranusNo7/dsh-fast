@@ -83,11 +83,34 @@ export interface PiAiAdapterOptions {
   onReplayDegrade?: (detail: { provider: string; model: string; reason: string }) => void
 }
 
+/** OpenAI-compatible APIs that accept the Responses `service_tier` request field. */
+const SERVICE_TIER_APIS = new Set([
+  'openai-completions',
+  'openai-responses',
+  'openai-codex-responses',
+])
+
+/** Map the user-facing Fast alias to the current OpenAI SDK spelling. */
+function wireServiceTier(serviceTier: string): string {
+  return serviceTier === 'fast' ? 'priority' : serviceTier
+}
+
+/** Add the provider field without changing non-OpenAI payloads. */
+function payloadWithServiceTier(payload: unknown, serviceTier: string): unknown {
+  if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) return undefined
+  return {
+    ...(payload as Record<string, unknown>),
+    service_tier: wireServiceTier(serviceTier),
+  }
+}
+
 /** Copy profile stream knobs into pi-ai's common option vocabulary. */
 function profileOptions(
   profile: ResolvedPiAiProviderProfile,
   reasoning: ModelThinkingLevel | undefined,
   apiKey: string | undefined,
+  modelApi: string,
+  serviceTier: string | undefined,
 ): SimpleStreamOptions {
   const enabledReasoning: ThinkingLevel | undefined = reasoning === 'off' ? undefined : reasoning
   return {
@@ -98,6 +121,9 @@ function profileOptions(
     ...profile.transport === undefined ? {} : { transport: profile.transport },
     ...profile.timeoutMs === undefined ? {} : { timeoutMs: profile.timeoutMs },
     ...profile.websocketConnectTimeoutMs === undefined ? {} : { websocketConnectTimeoutMs: profile.websocketConnectTimeoutMs },
+    ...(serviceTier !== undefined && SERVICE_TIER_APIS.has(modelApi)
+      ? { onPayload: (payload: unknown) => payloadWithServiceTier(payload, serviceTier) }
+      : {}),
     // The agent recovery layer owns visible attempts; one adapter call is one SDK attempt.
     maxRetries: 0,
   }
@@ -294,6 +320,14 @@ export class PiAiAdapter extends LlmAdapter {
       model,
       options.reasoningEffort ?? profile.reasoning,
     )
+    const serviceTier = (options as unknown as { serviceTier?: string }).serviceTier
+      ?? (profile as unknown as { serviceTier?: string }).serviceTier
+    if (serviceTier !== undefined && !SERVICE_TIER_APIS.has(model.api)) {
+      throw new LlmError(
+        `pi-ai model "${model.id}" uses API "${model.api}", which does not support service tier "${serviceTier}"`,
+        'UNSUPPORTED_OPTION',
+      )
+    }
     const apiKey = await this.config.resolveApiKey(options.provider, profile)
 
     const consumer = new AbortController()
@@ -319,7 +353,7 @@ export class PiAiAdapter extends LlmAdapter {
         ? toPiContext(options, undefined, onReplayDegrade)
         : await toPiContext(options, attachments, onReplayDegrade, profile.maxRequestImageBytes)
       const events = snapshot.models.streamSimple(model, context, {
-        ...profileOptions(profile, reasoning, apiKey),
+        ...profileOptions(profile, reasoning, apiKey, model.api, serviceTier),
         ...options.temperature === undefined ? {} : { temperature: options.temperature },
         ...options.maxTokens === undefined ? {} : { maxTokens: options.maxTokens },
         ...options.sessionId === undefined ? {} : { sessionId: String(options.sessionId) },

@@ -68,7 +68,7 @@ import { discoverModels } from './discovery.ts'
 
 export { PiAiAdapter } from './adapter.ts'
 export type { PiAiAdapterOptions } from './adapter.ts'
-export { Config } from './config.ts'
+export { Config, PI_AI_SERVICE_TIERS, ProviderProfileConfig, assertServiceable, resolveProfiles } from './config.ts'
 export type {
   PiAiCompatProfile,
   PiAiModality,
@@ -76,6 +76,7 @@ export type {
   PiAiModelProfile,
   PiAiProviderProfile,
   PiAiReasoningEfforts,
+  PiAiServiceTier,
   PiAiThinkingFormat,
   ResolvedPiAiProviderProfile,
 } from './config.ts'

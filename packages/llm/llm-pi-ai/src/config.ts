@@ -20,7 +20,7 @@ import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import type { CredentialRef } from '@deepseek-ai/dsh-credentials'
 import { MAX_TIMER_DELAY_MS } from '@deepseek-ai/dsh-timeout'
 import { resolveRetryPolicy, RetryPolicySchema } from '@deepseek-ai/dsh-llm'
-import type { ResolvedRetryPolicy, RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
+import type { LlmServiceTier, ResolvedRetryPolicy, RetryPolicyConfig } from '@deepseek-ai/dsh-llm'
 import {
   CACHE_CONTROL_FORMATS,
   CHAT_TEMPLATE_VARS,
@@ -70,6 +70,19 @@ export const DEFAULT_MAX_TOKENS = 32_768
  * repeating a request that cannot succeed.
  */
 export const DEFAULT_INPUT: readonly PiAiModality[] = ['text']
+
+/** Service tiers understood by OpenAI-compatible pi-ai request payloads. */
+export const PI_AI_SERVICE_TIERS = [
+  'auto',
+  'default',
+  'flex',
+  'scale',
+  'priority',
+  'fast',
+] as const
+
+/** One configured service-tier value accepted by a pi-ai route profile. */
+export type PiAiServiceTier = LlmServiceTier
 
 export type {
   PiAiCompatProfile,
@@ -144,6 +157,8 @@ export interface PiAiProviderProfile {
   headers?: Record<string, string>
   /** Provider-neutral pi-ai reasoning level. */
   reasoning?: ModelThinkingLevel
+  /** OpenAI-compatible request processing tier; `fast` maps to the current `priority` wire value. */
+  serviceTier?: PiAiServiceTier
   /** Token budgets used by reasoning providers that support them. */
   thinkingBudgets?: ThinkingBudgets
   /** Prompt-cache retention preference. */
@@ -292,7 +307,8 @@ const modelProfile: z<PiAiModelProfile> = z.object({
 /** A {@link modelProfile} whose id lives in the `modelOverrides` dict key. */
 const modelOverride: z<PiAiModelOverride> = z.object(modelFields)
 
-const profile = z.object({
+/** Runtime schema for one provider profile, reusable by policy adapters. */
+export const ProviderProfileConfig: z<PiAiProviderProfile> = z.object({
   apiKeyEnv: z.string().role('credential-ref'),
   displayName: z.string(),
   api: z.union(supportedProtocols()),
@@ -305,6 +321,7 @@ const profile = z.object({
   defaultInput: z.array(z.union(MODALITIES)).default([...DEFAULT_INPUT]),
   headers: z.dict(z.string()),
   reasoning: z.union(THINKING_LEVELS),
+  serviceTier: z.union(PI_AI_SERVICE_TIERS) as unknown as z<PiAiServiceTier>,
   thinkingBudgets,
   cacheRetention: z.union(['none', 'short', 'long']),
   transport: z.union(['sse', 'websocket', 'websocket-cached', 'auto']),
@@ -314,6 +331,8 @@ const profile = z.object({
   maxRequestImageBytes: z.number().step(1).min(1).default(DEFAULT_MAX_REQUEST_IMAGE_BYTES),
   retryPolicy: RetryPolicySchema,
 })
+
+const profile = ProviderProfileConfig
 
 /** Runtime schema for {@link Config}. */
 export const Config: z<Config> = z.object({
