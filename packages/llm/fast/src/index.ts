@@ -15,6 +15,7 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type { LlmCallConfig } from '@deepseek-ai/dsh-llm'
 import type { LlmModelInfo } from '@deepseek-ai/dsh-llm'
+import type { CommandInvocation, CommandResult } from '@deepseek-ai/dsh-commands'
 import { FAST_EVENT, foldFastMode } from './fast.ts'
 import './types.ts'
 
@@ -87,7 +88,8 @@ async function requestWithFastMode(
 }
 
 /**
- * Register the Fast controller and its request waterfall.
+ * Register the Fast controller, its request waterfall, and the human-facing
+ * `/fast` command when the command registry is present.
  * @param ctx - Cordis context carrying `llm` and `sessions`.
  */
 export function apply(ctx: Context): void {
@@ -98,4 +100,46 @@ export function apply(ctx: Context): void {
       requestWithFastMode(agent, next)),
     'fast: tier injection',
   )
+
+  // Human command is optional: the plugin works without it, but when
+  // `ctx.commands` is composed the user can toggle Fast without the UI.
+  const commands = (ctx as unknown as { get: (name: string) => unknown }).get?.('commands') as
+    | { register: (def: { name: string; description: string; handler: (inv: CommandInvocation) => Promise<CommandResult> }) => () => void }
+    | undefined
+  if (commands !== undefined) {
+    ctx.effect(function* () {
+      yield commands.register({
+        name: 'fast',
+        description: 'Toggle Fast mode (usage: /fast [on|off|status])',
+        handler: async (invocation: CommandInvocation): Promise<CommandResult> => {
+          const agent = invocation.agent as Agent | undefined
+          if (agent === undefined) return { kind: 'error', text: 'Fast mode is only available inside a session.' }
+          const raw = invocation.rawInput.trim().toLowerCase()
+          const current = foldFastMode(agent.session.events) === true
+          if (raw === '' || raw === 'toggle') {
+            const next = !current
+            controller.setFast(agent, next)
+            return { kind: 'success', text: `Fast mode ${next ? 'enabled' : 'disabled'}.` }
+          }
+          if (raw === 'on' || raw === 'enable' || raw === '1' || raw === 'true') {
+            if (current) return { kind: 'success', text: 'Fast mode is already enabled.' }
+            controller.setFast(agent, true)
+            return { kind: 'success', text: 'Fast mode enabled.' }
+          }
+          if (raw === 'off' || raw === 'disable' || raw === '0' || raw === 'false') {
+            if (!current) return { kind: 'success', text: 'Fast mode is already disabled.' }
+            controller.setFast(agent, false)
+            return { kind: 'success', text: 'Fast mode disabled.' }
+          }
+          if (raw === 'status' || raw === 'show') {
+            return { kind: 'success', text: `Fast mode is ${current ? 'enabled' : 'disabled'}.` }
+          }
+          return {
+            kind: 'error',
+            text: 'Usage: /fast [on|off|status] — bare /fast toggles.',
+          }
+        },
+      })
+    }, 'fast: /fast command')
+  }
 }
