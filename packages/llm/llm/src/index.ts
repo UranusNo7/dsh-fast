@@ -603,6 +603,7 @@ export class LlmRuntime extends Service {
         name: model.name,
         ...model.description === undefined ? {} : { description: model.description },
         ...inputModalities === undefined ? {} : { inputModalities },
+        ...model.supportsFast === undefined ? {} : { supportsFast: model.supportsFast },
       }
     })
   }
@@ -669,6 +670,7 @@ export class LlmRuntime extends Service {
       name: resolved.name,
       ...resolved.description === undefined ? {} : { description: resolved.description },
       ...inputModalities === undefined ? {} : { inputModalities },
+      ...resolved.supportsFast === undefined ? {} : { supportsFast: resolved.supportsFast },
       ...context === undefined ? {} : { context: { contextWindow: context.contextWindow } },
       ...defaultMaxTokens === undefined ? {} : { defaultMaxTokens },
     }

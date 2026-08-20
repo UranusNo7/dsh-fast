@@ -41,7 +41,10 @@ const install: InvariantInstaller = Object.assign((ctx: Context, fail: Invariant
       fail(`llm request for session "${String(session.id)}" diverges from the dispatch-time durable derivation (log-reconstruction desync)`)
     }
 
-    const headerMatches = options.model === header.config.model
+    const headerMatches = options.provider === header.config.provider
+      && options.model === header.config.model
+      && options.reasoningEffort === header.config.reasoningEffort
+      && options.serviceTier === header.config.serviceTier
       && options.system === header.system
       && options.temperature === header.config.temperature
       && options.maxTokens === header.config.maxTokens
