@@ -36,15 +36,13 @@ const reasoning = z.object({
   allowed: z.array(z.string()).default([]),
 })
 
-const SERVICE_TIERS = ['auto', 'default', 'flex', 'scale', 'priority', 'fast'] as const
-
 const model = z.object({
   name: z.string(),
   contextWindow: z.number().step(1).min(1),
   maxTokens: z.number().step(1).min(1),
   input: z.array(z.union(POLICY_MODALITIES)).default(['text']),
   reasoning,
-  serviceTier: z.union(SERVICE_TIERS),
+  serviceTier: z.string() as unknown as z<LlmServiceTier>,
   supportsFast: z.boolean().default(false),
   routes: z.array(route).required(),
 })

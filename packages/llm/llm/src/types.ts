@@ -241,7 +241,7 @@ export interface LlmModelInfo {
   description?: string
   /** Accepted request modalities; absent means unknown, while an explicit omission is negative capability. */
   inputModalities?: readonly ModelModality[]
-  /** Optional adapter-declared support for the provider's Fast service tier. */
+  /** Whether this model may be used with a Fast-tier request when that tier is active. Generic; Fast plugin augments the tier map. */
   supportsFast?: boolean
 }
 
@@ -339,8 +339,16 @@ export interface ToolSchema {
   parameters: Record<string, unknown>
 }
 
-/** Provider-neutral service tiers accepted by adapters that expose request-level tier selection. */
-export type LlmServiceTier = 'auto' | 'default' | 'flex' | 'scale' | 'priority' | 'fast'
+/** Merge-extensible provider-neutral service tiers. Add entries via declaration merging on {@link LlmServiceTierMap}. */
+export interface LlmServiceTierMap {
+  auto: 'auto'
+  default: 'default'
+  flex: 'flex'
+  scale: 'scale'
+  priority: 'priority'
+}
+/** Any declared provider-neutral service tier. Plugins may pass any string; known tiers are typed via the map. */
+export type LlmServiceTier = LlmServiceTierMap[keyof LlmServiceTierMap] | (string & {})
 
 /** A single model request, fully assembled. */
 export interface GenerateOptions {
