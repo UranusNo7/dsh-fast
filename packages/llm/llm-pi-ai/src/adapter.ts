@@ -57,7 +57,8 @@ import type {
 } from '@deepseek-ai/dsh-llm'
 import type { AttachmentStore } from '@deepseek-ai/dsh-attachment'
 import { idleWatchdog, timeoutOf } from '@deepseek-ai/dsh-timeout'
-import type { ResolvedPiAiProviderProfile } from './config.ts'
+import { resolveProfiles } from './config.ts'
+import type { PiAiProviderProfile, ResolvedPiAiProviderProfile } from './config.ts'
 import { toPiContext } from './context.ts'
 import { toStreamChunks } from './stream.ts'
 
@@ -241,6 +242,17 @@ function requestHeaders(headers: Readonly<Record<string, string>> | undefined): 
  */
 export class PiAiAdapter extends LlmAdapter {
   private snapshot: PiAiSnapshot | undefined
+
+  /**
+   * Expose the one explicit profile resolve step to out-of-package adapter
+   * constructors (per-tier policy plugins build filtered provider subsets) so
+   * they need no import of the package's internal config module.
+   * @param providers - configured provider profiles keyed by route.
+   * @returns validated profiles in configuration order.
+   */
+  static resolveProfiles(providers: Readonly<Record<string, PiAiProviderProfile>> | undefined): Map<string, ResolvedPiAiProviderProfile> {
+    return resolveProfiles(providers)
+  }
 
   constructor(private readonly config: PiAiAdapterOptions) {
     super()

@@ -250,6 +250,9 @@ describe('codex-model-policy dual entry', () => {
 
   it('blocks the composer only once the Host reports the route unservable', async () => {
     const b = await bench()
+    // Pin the locale: the provisional resolution follows the browser language,
+    // which is machine-dependent under jsdom and not what this test asserts.
+    ;(b.ctx.get('locale') as unknown as { setLocale(id: string): void }).setLocale('zh')
     b.mint('s1')
     const face = b.seat().inject!(sid('s1'))
 

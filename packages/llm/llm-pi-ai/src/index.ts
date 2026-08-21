@@ -70,7 +70,7 @@ import { registerPiAiFlows } from './login.ts'
 
 export { PiAiAdapter } from './adapter.ts'
 export type { PiAiAdapterOptions } from './adapter.ts'
-export { Config, PI_AI_SERVICE_TIERS, ProviderProfileConfig, assertServiceable, resolveProfiles } from './config.ts'
+export { Config } from './config.ts'
 export type {
   PiAiCompatProfile,
   PiAiModality,
