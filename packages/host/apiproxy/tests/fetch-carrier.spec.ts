@@ -156,6 +156,9 @@ function fakeApi(overrides: Partial<{ muxFrames: MuxFrame[]; hostFrames: HostFra
       async createDirectory(request) {
         return { rpcId: request.rpcId, result: { ok: true, value: { path: '/w/new' } } }
       },
+      async listFilesystemRoots(request) {
+        return { rpcId: request.rpcId, result: { ok: true, value: { roots: [{ name: '/', path: '/', hidden: false }] } } }
+      },
       async openPath(request) {
         return { rpcId: request.rpcId, result: { ok: true, value: { opened: true as const } } }
       },

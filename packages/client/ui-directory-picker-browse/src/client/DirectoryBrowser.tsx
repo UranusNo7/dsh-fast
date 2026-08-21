@@ -53,6 +53,8 @@ export interface DirectoryBrowserProps {
   listDirectory: (path?: string, signal?: AbortSignal) => Promise<DirectoryListing>
   /** Create one child directory under an existing parent. */
   createDirectory: (path: string, name: string) => Promise<string>
+  /** List filesystem roots (drives on Windows) for the drive quick-switch. */
+  listFilesystemRoots?: (signal?: AbortSignal) => Promise<readonly DirectoryEntry[]>
   /** The operator confirmed a directory (the selection, else the listed level). */
   onOpen: (path: string) => void
   /** Close without picking (mask, Escape, Cancel). */
@@ -62,6 +64,9 @@ export interface DirectoryBrowserProps {
   /** Localized copy. */
   t: Translate
 }
+
+/** Synthetic path token for the virtual "This PC" listing (never sent to the host). */
+const COMPUTER_PATH = '__COMPUTER__'
 
 /** Failure text: the Host business message when typed, else the throw's text. */
 function failureText(error: unknown): string {
@@ -125,6 +130,22 @@ function separatorOf(listing: DirectoryListing): '\\' | '/' {
 function levelDirectory(listing: DirectoryListing): string {
   const sep = separatorOf(listing)
   return listing.path.endsWith(sep) ? listing.path : `${listing.path}${sep}`
+}
+
+/** True when the filesystem roots represent Windows drives (any entry path matches `X:\`). */
+function isWindowsRoots(roots: readonly DirectoryEntry[] | null): boolean {
+  return roots !== null && roots.some(entry => /^[A-Za-z]:\\$/.test(entry.path))
+}
+
+/** Synthesize the virtual "This PC" listing from the host's drive enumeration. */
+function computerListing(roots: readonly DirectoryEntry[], home: string, computerLabel: string): DirectoryListing {
+  return {
+    path: COMPUTER_PATH,
+    home,
+    crumbs: [{ name: computerLabel, path: COMPUTER_PATH, hidden: false }],
+    entries: [...roots].sort((a, b) => a.name.localeCompare(b.name)),
+    truncated: false,
+  }
 }
 
 /** The directory text a draft-following scan last sent, with the level path the host answered it with. */
@@ -259,13 +280,26 @@ function LevelColumn({ entries, selectedPath, busy, onPick, showHidden, filterPr
  * @param props - owner-controlled browser props.
  * @returns the dialog element (null while closed, via Modal).
  */
-export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen, onClose, busy, t }: DirectoryBrowserProps) {
+export function DirectoryBrowser({
+  open,
+  listDirectory,
+  createDirectory,
+  listFilesystemRoots,
+  onOpen,
+  onClose,
+  busy,
+  t,
+}: DirectoryBrowserProps) {
   // Miller state: the listed level, the selected row in it, and the selected
   // folder's own listing (the right column; null while nothing is selected).
   const [parent, setParent] = useState<DirectoryListing | null>(null)
   const [selected, setSelected] = useState<DirectoryEntry | null>(null)
   const [child, setChild] = useState<DirectoryListing | null>(null)
   const [loading, setLoading] = useState(false)
+  // Filesystem roots for the drive quick-switch (Windows drives, POSIX "/").
+  const [roots, setRoots] = useState<readonly DirectoryEntry[] | null>(null)
+  // Whether the virtual "This PC" listing is shown instead of a real directory level.
+  const [showingComputer, setShowingComputer] = useState(false)
   // Derived from `loading` and `scanWindow` by the slow-scan effect below:
   // true only once the current listing call has been in flight for
   // SLOW_SCAN_DELAY_MS, so fast listings never render the indicator at all.
@@ -427,6 +461,7 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
       const landSingle = (): void => {
         if (landed || seq !== requestSeq.current) return
         landed = true
+        setShowingComputer(false)
         setParent(target)
         setSelected(null)
         setChild(null)
@@ -446,6 +481,7 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
         const match = parentLevel.entries.find(entry => fold(entry.path) === fold(target.path))
         if (match === undefined) { landSingle(); return }
         landed = true
+        setShowingComputer(false)
         setParent(parentLevel)
         setSelected(match)
         setChild(target)
@@ -471,8 +507,28 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
 
   /** Commit a submitted path (Enter, a crumb, the initial home listing): the editor closes, failures surface. */
   const navigate = useCallback((path?: string) => {
+    setShowingComputer(false)
     land(path, { closeEditor: true, announce: true })
   }, [land])
+
+  /** Show the virtual "This PC" listing built from the drive enumeration. */
+  const showComputer = useCallback(() => {
+    if (roots === null || roots.length === 0) return
+    const home = parent?.home ?? roots[0]?.path ?? 'C:\\'
+    const listing = computerListing(roots, home, t('browser.computer'))
+    supersede()
+    setLoading(false)
+    setError(null)
+    setPathDraft(null)
+    setSelected(null)
+    setChild(null)
+    setParent(listing)
+    setShowingComputer(true)
+    scanned.current = null
+  }, [roots, parent, supersede, t])
+
+  /** Whether the current Miller view is the virtual computer listing. */
+  const isComputerListing = showingComputer && parent?.path === COMPUTER_PATH
 
   // Editor-close focus parking (consumed by the refocus effect below the
   // miller-row ref): a pick parks on the selection's row, Enter and an
@@ -560,6 +616,26 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
     select(entry)
   }, [child, select])
 
+  // Filesystem roots are fetched once per open for the drive quick-switch;
+  // a failure keeps the dialog usable (drives simply stay hidden).
+  useEffect(() => {
+    if (!open || listFilesystemRoots === undefined) {
+      if (!open) setRoots(null)
+      return
+    }
+    let cancelled = false
+    const controller = new AbortController()
+    void listFilesystemRoots(controller.signal).then((entries) => {
+      if (!cancelled) setRoots(entries)
+    }, () => {
+      if (!cancelled) setRoots(null)
+    })
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [open, listFilesystemRoots])
+
   // Every open starts fresh at the Host home directory; closing invalidates
   // any in-flight response so a late arrival cannot repopulate a closed dialog.
   useEffect(() => {
@@ -570,6 +646,7 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
       setChild(null)
       setCreatingFolder(false)
       setShowHidden(false)
+      setShowingComputer(false)
       navigate()
       return
     }
@@ -590,9 +667,14 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   }, [open, navigate, supersede])
 
   /** The folder a create or Open acts on: the selection, else the listed level. */
-  const targetPath = selected?.path ?? parent?.path ?? null
+  const rawTargetPath = selected?.path ?? parent?.path ?? null
+  // The virtual computer listing is not a filesystem location: Open/Create must
+  // target the selected drive instead, or stay disabled with no selection.
+  const targetPath = rawTargetPath === COMPUTER_PATH ? null : rawTargetPath
   const targetName = selected?.name
-    ?? (parent === null ? '' : (displayCrumbs(parent, t('browser.home')).at(-1)?.name ?? parent.path))
+    ?? (parent === null ? '' : isComputerListing
+      ? t('browser.computer')
+      : (displayCrumbs(parent, t('browser.home')).at(-1)?.name ?? parent.path))
 
   const confirmCreate = (): void => {
     /* v8 ignore next -- reentry fence: the nested dialog only renders with a target and disables while creating. */
@@ -684,8 +766,24 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   // instead, and the filter arrives with the level it belongs to.
   const typedPrefix = crumbSource === null || pathDraft === null
     ? null
-    : readDraft(crumbSource, pathDraft, scanned.current).tail
-  const crumbs = crumbSource === null ? [] : displayCrumbs(crumbSource, t('browser.home'))
+    : isComputerListing
+      ? null
+      : readDraft(crumbSource, pathDraft, scanned.current).tail
+  const baseCrumbs = crumbSource === null
+    ? []
+    : isComputerListing
+      ? crumbSource.crumbs
+      : displayCrumbs(crumbSource, t('browser.home'))
+  // On Windows the ancestry is rooted at a drive; prepend the virtual
+  // "This PC" crumb so crossing drives does not require typing a path.
+  const crumbs = (() => {
+    if (isComputerListing) return baseCrumbs
+    if (!isWindowsRoots(roots) || baseCrumbs.length === 0) return baseCrumbs
+    const first = baseCrumbs[0]
+    if (first === undefined || first.path === COMPUTER_PATH) return baseCrumbs
+    // Do not duplicate when already at the computer virtual level.
+    return [{ name: t('browser.computer'), path: COMPUTER_PATH, hidden: false }, ...baseCrumbs]
+  })()
   const crumbTail = crumbs.at(-1)?.path
   useEffect(() => {
     const trail = crumbTrailRef.current
@@ -748,6 +846,15 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
   // committing actions must not act on the previous selection/listing while
   // a different path is displayed.
   const draftPending = pathDraft !== null
+  // Drive quick-switch: only when we have multiple roots (Windows) do the
+  // pills earn their row; a single POSIX "/" needs no switcher.
+  const showDriveBar = roots !== null && roots.length > 1 && isWindowsRoots(roots)
+  const activeDrivePath = (() => {
+    const current = selected?.path ?? parent?.path ?? null
+    if (current === null || !isWindowsRoots(roots)) return null
+    const match = roots?.find(entry => current.toLowerCase().startsWith(entry.path.toLowerCase()))
+    return match?.path ?? null
+  })()
 
   return (
     <Modal
@@ -819,7 +926,10 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
                           type="button"
                           className={css.crumb}
                           disabled={parentInert}
-                          onClick={() => { navigate(crumb.path) }}
+                          onClick={() => {
+                            if (crumb.path === COMPUTER_PATH) showComputer()
+                            else navigate(crumb.path)
+                          }}
                         >
                           {crumb.name}
                         </button>
@@ -857,8 +967,17 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
                         setPathDraft('')
                         return
                       }
-                      const base = selected?.path ?? parent.path
-                      const sep = separatorOf(parent)
+                      const baseRaw = selected?.path ?? parent.path
+                      // The virtual computer listing has no filesystem path to seed.
+                      const base = baseRaw === COMPUTER_PATH
+                        ? (selected?.path ?? '')
+                        : baseRaw
+                      if (base === '') {
+                        setPathDraft('')
+                        return
+                      }
+                      // Computer listing has no separator semantics; treat as Windows root.
+                      const sep = parent.path === COMPUTER_PATH ? '\\' : separatorOf(parent)
                       setPathDraft(base.endsWith(sep) ? base : `${base}${sep}`)
                     }}
                   >
@@ -912,6 +1031,41 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
                 />
               )}
           </div>
+          {showDriveBar && (
+            <div className={css.driveBar} role="navigation" aria-label={t('browser.drives')}>
+              <span className={css.driveLabel}>{t('browser.drives')}</span>
+              <span className={css.driveList}>
+                {(roots ?? []).map((entry) => {
+                  const active = activeDrivePath !== null && entry.path.toLowerCase() === activeDrivePath.toLowerCase()
+                  return (
+                    <button
+                      key={entry.path}
+                      type="button"
+                      className={clsx(css.drivePill, active && css.drivePillActive)}
+                      aria-current={active || undefined}
+                      disabled={parentInert}
+                      onClick={() => { navigate(entry.path) }}
+                      title={entry.path}
+                    >
+                      <IconFolderClose16 size={14} className={active ? css.driveIconActive : css.driveIcon} />
+                      <span className={css.driveName}>{entry.name}</span>
+                    </button>
+                  )
+                })}
+                <button
+                  type="button"
+                  className={clsx(css.drivePill, isComputerListing && css.drivePillActive)}
+                  aria-current={isComputerListing || undefined}
+                  disabled={parentInert}
+                  onClick={() => { showComputer() }}
+                  title={t('browser.computer')}
+                >
+                  <IconFolderClose16 size={14} className={isComputerListing ? css.driveIconActive : css.driveIcon} />
+                  <span className={css.driveName}>{t('browser.computer')}</span>
+                </button>
+              </span>
+            </div>
+          )}
         </div>
         <div className={css.content}>
           <div className={css.millerRow} ref={millerRowRef}>
@@ -955,7 +1109,7 @@ export function DirectoryBrowser({ open, listDirectory, createDirectory, onOpen,
           <Button
             variant="outline"
             icon={<IconPlusOutline16 size={14} />}
-            disabled={parent === null || loading || parentInert || draftPending}
+            disabled={targetPath === null || loading || parentInert || draftPending}
             onClick={() => {
               setFolderDraft('')
               setCreateError(null)

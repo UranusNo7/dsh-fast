@@ -38,6 +38,85 @@
   border-bottom: 1px solid var(--dsw-alias-border-l3);
 }
 
+/* Drive quick-switch bar: horizontal pill row between header and Miller columns. */
+.driveBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-height: 32px;
+  padding: 6px 16px 6px 24px;
+  border-bottom: 1px solid var(--dsw-alias-border-l3);
+  background: var(--dsw-alias-bg-layer-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.driveLabel {
+  flex: none;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  white-space: nowrap;
+}
+
+.driveList {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.drivePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  border-radius: 12px;
+  background: var(--dsw-alias-bg-layer-1);
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 500;
+  color: var(--dsw-alias-label-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.drivePill:hover {
+  background: var(--dsw-alias-interactive-bg-hover);
+  color: var(--dsw-alias-label-primary);
+}
+
+.drivePillActive,
+.drivePillActive:hover {
+  background: var(--dsw-alias-interactive-bg-active, var(--dsw-alias-interactive-bg-hover));
+  border-color: var(--dsw-alias-border-l2);
+  color: var(--dsw-alias-label-primary);
+}
+
+.driveIcon {
+  flex: none;
+  color: var(--dsw-alias-label-secondary);
+}
+
+.driveIconActive {
+  flex: none;
+  color: var(--dsw-alias-button-info-fill);
+}
+
+.driveName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .title {
   display: flex;
   align-items: flex-end;

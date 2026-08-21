@@ -5,7 +5,7 @@
  */
 import { createElement } from 'react'
 import type { ReactElement } from 'react'
-import type { DirectoryListing } from '@deepseek-ai/dsh-client-runtime/client'
+import type { DirectoryEntry, DirectoryListing } from '@deepseek-ai/dsh-client-runtime/client'
 import type { Translate } from '@deepseek-ai/dsh-client-locale/client'
 // Type-only: the owner contract of the directory-flow holes.
 import type { DirectoryFlowOwnerProps } from '@deepseek-ai/dsh-client-ui-workspace/client'
@@ -17,6 +17,8 @@ export interface BrowseFlowInjected {
   listDirectory: (path?: string, signal?: AbortSignal) => Promise<DirectoryListing>
   /** Create one child directory under an existing parent. */
   createDirectory: (path: string, name: string) => Promise<string>
+  /** List filesystem roots (drives on Windows) for the drive quick-switch. */
+  listFilesystemRoots: (signal?: AbortSignal) => Promise<readonly DirectoryEntry[]>
   /** Localized dialog copy (this package's namespace). */
   t: Translate
 }
@@ -36,6 +38,7 @@ export function BrowseDirectoryFlow(props: DirectoryFlowOwnerProps & BrowseFlowI
     busy: props.busy,
     listDirectory: props.listDirectory,
     createDirectory: props.createDirectory,
+    listFilesystemRoots: props.listFilesystemRoots,
     t: props.t,
     onOpen: props.onPicked,
     onClose: props.onCancel,

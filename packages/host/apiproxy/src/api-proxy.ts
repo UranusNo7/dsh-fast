@@ -2922,6 +2922,25 @@ export function createApiProxy(ctx: Context, defaults: ApiProxyDefaults): ApiPro
         }
       },
 
+      async listFilesystemRoots(request, signal) {
+        const capability = ctx.directoryPicker.capability()
+        if (capability.kind !== 'browse') {
+          return err(request, {
+            code: 'directory-picker-unavailable',
+            message: `host.listFilesystemRoots needs the browse capability; the composed picker serves "${capability.kind}"`,
+            details: { capability: capability.kind },
+          })
+        }
+        try {
+          return ok(request, { roots: await capability.listFilesystemRoots(signal) })
+        } catch (error: unknown) {
+          if (signal.aborted) {
+            return err(request, { code: 'cancelled', message: 'filesystem roots listing was aborted', details: {} })
+          }
+          return err(request, directoryError(error))
+        }
+      },
+
       async openPath(request, signal) {
         return openPath(request, request.payload.path, signal)
       },

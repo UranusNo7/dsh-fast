@@ -35,6 +35,8 @@ export function apply(ctx: ClientContext): void {
       ['zh', {
         'browser.title': '选择工作区目录',
         'browser.home': '主目录',
+        'browser.computer': '此电脑',
+        'browser.drives': '驱动器',
         'browser.newFolder': '新建文件夹',
         'browser.folderName': '文件夹名称',
         'browser.createIn': '在"{name}"中新建文件夹',
@@ -50,6 +52,8 @@ export function apply(ctx: ClientContext): void {
       ['en', {
         'browser.title': 'Select Workspace Directory',
         'browser.home': 'Home',
+        'browser.computer': 'This PC',
+        'browser.drives': 'Drives',
         'browser.newFolder': 'New folder',
         'browser.folderName': 'Folder name',
         'browser.createIn': 'New folder in "{name}"',
@@ -75,6 +79,7 @@ export function apply(ctx: ClientContext): void {
   const injected = (): BrowseFlowInjected => ({
     listDirectory: (path, signal) => ctx.workspaces.listDirectory(path, signal),
     createDirectory: (path, name) => ctx.workspaces.createDirectory(path, name),
+    listFilesystemRoots: signal => ctx.workspaces.listFilesystemRoots(signal),
     t: ctx.locale.bind(LOCALE_NS),
   })
   // Both declaration lifetimes must be live before the pair installs; the

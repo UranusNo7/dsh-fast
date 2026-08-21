@@ -73,3 +73,11 @@ export const hostOpenPathRequestSchema = z.object({
 export const hostOpenPathValueSchema = z.object({
   opened: z.literal(true),
 }) satisfies z.ZodType<Wire<ResponseValue<'host.openPath'>>>
+
+/** host.listFilesystemRoots request payload (empty object literal). */
+export const hostListFilesystemRootsRequestSchema = z.object({}) satisfies z.ZodType<Wire<RequestPayload<'host.listFilesystemRoots'>>>
+
+/** host.listFilesystemRoots response value. */
+export const hostListFilesystemRootsValueSchema = z.object({
+  roots: z.array(directoryEntrySchema),
+}) satisfies z.ZodType<Wire<ResponseValue<'host.listFilesystemRoots'>>>

@@ -95,4 +95,14 @@ export interface HostApi {
     request: RpcRequest<{ path: string }>,
     signal: AbortSignal,
   ): Promise<RpcResponse<{ opened: true }>>
+
+  /**
+   * List filesystem roots for the in-app browser's quick-switch affordance
+   * (drive letters on Windows, `/` on POSIX). Only served under the `browse`
+   * capability.
+   */
+  listFilesystemRoots(
+    request: RpcRequest<{}>,
+    signal: AbortSignal,
+  ): Promise<RpcResponse<{ roots: DirectoryEntry[] }>>
 }

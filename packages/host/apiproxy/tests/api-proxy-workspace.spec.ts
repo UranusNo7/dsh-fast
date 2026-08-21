@@ -177,6 +177,7 @@ const BROWSE_STUB: DirectoryPickerCapability = {
     if (name === 'unwritable') throw new Error('disk detached')
     return `${path}/${name}`
   },
+  listFilesystemRoots: async () => [{ name: '/', path: '/', hidden: false }],
 }
 
 describe('host.listDirectory / host.createDirectory', () => {
@@ -210,6 +211,7 @@ describe('host.listDirectory / host.createDirectory', () => {
         signal?.addEventListener('abort', () => { reject(new Error('scan aborted')) }, { once: true })
       }),
       createDirectory: async () => '/never',
+      listFilesystemRoots: async () => [{ name: '/', path: '/', hidden: false }],
     })
     const abort = new AbortController()
     const pending = api.host.listDirectory(request({}), abort.signal)

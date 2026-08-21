@@ -2,7 +2,7 @@
 
 import type { Context } from '@deepseek-ai/cordis'
 import type {
-  DirectoryListing, IApiClient, RpcError,
+  DirectoryEntry, DirectoryListing, IApiClient, RpcError,
   SessionId, WorkspaceId, WorkspaceView,
 } from '@deepseek-ai/dsh-api-remotes/client'
 import type { SnapshotStore } from '../contract/store.ts'
@@ -236,6 +236,18 @@ export class WorkspaceRuntime implements IWorkspaces {
     const response = await this.api.host.createDirectory({ path, name })
     if (!response.result.ok) throw new DirectoryBrowseError(response.result.error)
     return response.result.value.path
+  }
+
+  /**
+   * List filesystem roots (drive letters on Windows) through the Host's
+   * `browse` capability.
+   * @param signal - aborts the wire request and the Host enumeration.
+   * @returns the available root entries.
+   */
+  async listFilesystemRoots(signal?: AbortSignal): Promise<readonly DirectoryEntry[]> {
+    const response = await this.api.host.listFilesystemRoots({}, signal)
+    if (!response.result.ok) throw new DirectoryBrowseError(response.result.error)
+    return response.result.value.roots
   }
 
   /**

@@ -2655,6 +2655,9 @@ function createFixtureWorld(options: FixtureOptions): FixtureWorld {
         directoryTree.set(target, [])
         return ok(request, { path: target })
       },
+      listFilesystemRoots: request => ok(request, {
+        roots: [{ name: '/', path: '/', hidden: false }],
+      }),
       openPath: request => ok(request, { opened: true as const }),
     },
     workspace: {
@@ -3195,6 +3198,7 @@ export class FixtureApiClient extends AbstractApiClient {
       case 'host.pickDirectory': return this.api.host.pickDirectory(request, new AbortController().signal)
       case 'host.listDirectory': return this.api.host.listDirectory(request, new AbortController().signal)
       case 'host.createDirectory': return this.api.host.createDirectory(request)
+      case 'host.listFilesystemRoots': return this.api.host.listFilesystemRoots(request, new AbortController().signal)
       case 'host.openPath': return this.api.host.openPath(request, new AbortController().signal)
       case 'workspace.list': return this.api.workspace.list(request)
       case 'workspace.create': return this.api.workspace.create(request)

@@ -97,6 +97,9 @@ export class FakeApiClient implements IApiClient {
   onCreateDirectory: (payload: unknown) => Promise<RpcResponse<{ path: string }>> =
     () => Promise.resolve(ok({ path: '/home/fake/new' }))
 
+  onListFilesystemRoots: (payload: unknown) => Promise<RpcResponse<{ roots: { name: string; path: string; hidden: boolean }[] }>> =
+    () => Promise.resolve(ok({ roots: [{ name: '/', path: '/', hidden: false }] }))
+
   private readonly muxConns: StreamConn<MuxFrame>[] = []
   private readonly hostConns: StreamConn<HostFrame>[] = []
   lastSearchSignal: AbortSignal | undefined
@@ -146,6 +149,7 @@ export class FakeApiClient implements IApiClient {
     pickDirectory: payload => this.record('host.pickDirectory', payload, this.onPickDirectory(payload)),
     listDirectory: payload => this.record('host.listDirectory', payload, this.onListDirectory(payload)),
     createDirectory: payload => this.record('host.createDirectory', payload, this.onCreateDirectory(payload)),
+    listFilesystemRoots: payload => this.record('host.listFilesystemRoots', payload, this.onListFilesystemRoots(payload)),
     openPath: payload => this.record('host.openPath', payload, this.onOpenPath(payload)),
   }
 

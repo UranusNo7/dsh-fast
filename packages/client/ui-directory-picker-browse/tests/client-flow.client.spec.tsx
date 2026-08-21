@@ -34,7 +34,8 @@ async function bench() {
   ctx.provide('locale', new LocaleRuntime(ctx))
   const listDirectory = vi.fn(async (): Promise<DirectoryListing> => homeListing)
   const createDirectory = vi.fn(async (path: string, name: string) => `${path}/${name}`)
-  ctx.provide('workspaces', { listDirectory, createDirectory } as never)
+  const listFilesystemRoots = vi.fn(async () => [{ name: '/', path: '/', hidden: false }])
+  ctx.provide('workspaces', { listDirectory, createDirectory, listFilesystemRoots } as never)
   const slots = ctx.get('slots') as SlotRegistry
   const declare = () => slots.register({
     name: 'root',
@@ -181,9 +182,11 @@ describe('directory-picker-browse client half', () => {
     const injected = (entry.inject as () => {
       listDirectory: (path?: string) => Promise<DirectoryListing>
       createDirectory: (path: string, name: string) => Promise<string>
+      listFilesystemRoots: () => Promise<readonly { name: string; path: string; hidden: boolean }[]>
     })()
     await expect(injected.listDirectory()).resolves.toBe(homeListing)
     await expect(injected.createDirectory(HOME, 'fresh')).resolves.toBe(`${HOME}/fresh`)
+    await expect(injected.listFilesystemRoots()).resolves.toEqual([{ name: '/', path: '/', hidden: false }])
     expect(b.listDirectory).toHaveBeenCalledOnce()
     expect(b.createDirectory).toHaveBeenCalledWith(HOME, 'fresh')
   })
@@ -197,6 +200,7 @@ describe('directory-picker-browse client half', () => {
         {...props}
         listDirectory={listDirectory}
         createDirectory={vi.fn(async () => '')}
+        listFilesystemRoots={vi.fn(async () => [])}
         t={t}
       />,
     )
@@ -216,6 +220,7 @@ describe('directory-picker-browse client half', () => {
         {...owner({ open: false })}
         listDirectory={vi.fn(async () => homeListing)}
         createDirectory={vi.fn(async () => '')}
+        listFilesystemRoots={vi.fn(async () => [])}
         t={key => key}
       />,
     )

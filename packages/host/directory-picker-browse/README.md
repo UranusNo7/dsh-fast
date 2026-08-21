@@ -19,5 +19,6 @@ None; this package neither assembles nor sends a provider request.
 ## Known Limitations and Deferred Work
 
 - **Windows hidden attribute is not read** — Node dirents do not expose `FILE_ATTRIBUTE_HIDDEN`, so `hidden` means dot-prefixed on every platform until a native probe is worth its cost.
-- **No drive-root enumeration** — on Windows the ancestry stops at the drive root; crossing drives waits for the browser UI's path-entry affordance rather than an enumeration primitive here.
 - **Whole-filesystem scope** — there is no per-deployment browse-root restriction. `workspace.create` accepts arbitrary paths, so a root here would be UX scoping rather than a security boundary.
+
+The drive enumeration behind the dialog's quick-switch bar (`listFilesystemRoots` — `C:`/`D:` pills and the virtual **This PC** entry, plus the breadcrumb's leading **This PC** crumb on Windows) is the former "no drive-root enumeration" limitation as shipped: ancestry still stops at the drive root, but crossing drives no longer waits for a typed path.

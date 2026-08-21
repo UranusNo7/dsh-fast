@@ -6,7 +6,7 @@
  * the concrete class. Widening this interface is the explicit act of
  * widening what features may do to the workspaces domain.
  */
-import type { DirectoryListing, SessionId, WorkspaceId, WorkspaceView } from '@deepseek-ai/dsh-api-remotes/client'
+import type { DirectoryEntry, DirectoryListing, SessionId, WorkspaceId, WorkspaceView } from '@deepseek-ai/dsh-api-remotes/client'
 import type { WorkspaceListState } from '../workspaces/service.ts'
 import type { ObservableSnapshot } from './store.ts'
 
@@ -53,6 +53,13 @@ export interface IWorkspaces {
    * @returns the created directory's absolute path.
    */
   createDirectory(path: string, name: string): Promise<string>
+  /**
+   * List filesystem roots (drive letters on Windows) through the Host's
+   * `browse` capability. Used by the in-app browser's drive quick-switch.
+   * @param signal - aborts the wire request and the Host enumeration.
+   * @returns the available root entries.
+   */
+  listFilesystemRoots(signal?: AbortSignal): Promise<readonly DirectoryEntry[]>
   /**
    * Open a filesystem path with the Host operating system's default application.
    * @param path - absolute or host-resolvable path.

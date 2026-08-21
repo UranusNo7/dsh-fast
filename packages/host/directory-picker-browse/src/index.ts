@@ -200,6 +200,7 @@ export default class BrowseDirectoryPicker extends DirectoryPicker {
     kind: 'browse',
     list: (path, signal) => this.list(path, signal),
     createDirectory: (path, name) => this.createDirectory(path, name),
+    listFilesystemRoots: signal => this.listFilesystemRoots(signal),
   }
 
   constructor(ctx: Context, private readonly config: Config) {
@@ -320,5 +321,37 @@ export default class BrowseDirectoryPicker extends DirectoryPicker {
       }
       throw new DirectoryPickerError('directory-create-failed', target, `cannot create ${target}: ${messageOf(error)}`)
     }
+  }
+
+  private async listFilesystemRoots(signal?: AbortSignal): Promise<DirectoryEntry[]> {
+    signal?.throwIfAborted()
+    if (process.platform !== 'win32') {
+      return [{ name: '/', path: '/', hidden: false }]
+    }
+    // Windows: probe A-Z drive letters in parallel; a drive is available when
+    // its root can be stated as a directory. The check races the caller's
+    // signal so a disconnected caller does not keep probing.
+    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')
+    const probes = letters.map(async (letter): Promise<DirectoryEntry | null> => {
+      const root = `${letter}:\\`
+      try {
+        const probe = stat(root)
+        const st = await (signal === undefined ? probe : raceAbort(probe, signal))
+        if (!st.isDirectory()) return null
+        return { name: `${letter}:`, path: root, hidden: false }
+      } catch {
+        if (signal?.aborted) throw asError(signal.reason)
+        return null
+      }
+    })
+    const results = await Promise.all(probes)
+    const roots = results.filter((entry): entry is DirectoryEntry => entry !== null)
+    // Sort by drive letter for deterministic ordering.
+    roots.sort((a, b) => a.name.localeCompare(b.name))
+    // Always at least expose C:\ when enumeration yields nothing (e.g. sandbox
+    // masks stat); the UI needs a drive to offer, and listing it will surface
+    // the real error if it is truly absent.
+    if (roots.length === 0) return [{ name: 'C:', path: 'C:\\', hidden: false }]
+    return roots
   }
 }

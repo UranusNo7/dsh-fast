@@ -77,6 +77,7 @@ function scriptedApi(overrides: {
       pickDirectory: r => ok(r, { path: null }),
       listDirectory: r => ok(r, { path: '/t', home: '/t', crumbs: [], entries: [], truncated: false }),
       createDirectory: r => ok(r, { path: '/t/new' }),
+      listFilesystemRoots: r => ok(r, { roots: [{ name: '/', path: '/', hidden: false }] }),
       openPath: r => ok(r, { opened: true as const }),
       ...overrides.host,
     },

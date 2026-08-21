@@ -84,6 +84,15 @@ export interface DirectoryPickerBrowseCapability {
    * `directory-create-failed` for a parent that is not fully qualified or any other failure.
    */
   createDirectory(path: string, name: string): Promise<string>
+  /**
+   * List filesystem roots (drive letters on Windows, `/` on POSIX) for the
+   * in-app browser's quick-switch affordance. A drive entry uses its native
+   * path (`C:\`) and is never hidden. The host owns enumeration — the client
+   * never synthesizes drive names itself.
+   * @param signal - caller lifetime; abort stops the enumeration.
+   * @returns the available root entries, name-sorted.
+   */
+  listFilesystemRoots(signal?: AbortSignal): Promise<DirectoryEntry[]>
 }
 
 /**
