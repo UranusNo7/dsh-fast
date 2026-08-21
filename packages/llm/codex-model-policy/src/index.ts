@@ -9,6 +9,7 @@ import {
 import type { LlmCallConfig } from '@deepseek-ai/dsh-llm'
 import type { LlmServiceTier } from '@deepseek-ai/dsh-llm'
 import { PiAiAdapter } from '@deepseek-ai/dsh-llm-pi-ai'
+import { authContextFrom, credentialStoreFrom } from '@deepseek-ai/dsh-llm-pi-ai'
 import { launchEnvironmentOf } from '@deepseek-ai/dsh-launch-environment'
 import { profilesForServiceTier, resolveConfig } from './config.ts'
 import { ModelPolicyAdapter } from './adapter.ts'
@@ -77,6 +78,7 @@ function physicalAdapterFor(
           'MISSING_CREDENTIAL',
         )
       },
+      auth: { credentials: credentialStoreFrom(ctx), authContext: authContextFrom(ctx) },
       resolveAttachments: () => ctx.get('attachments'),
     })
     adapters.set(key, adapter)
