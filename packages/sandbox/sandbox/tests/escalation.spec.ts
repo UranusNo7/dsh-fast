@@ -86,8 +86,11 @@ describe('approveEscalation', () => {
     const spy = ingredients({ approver: approver('allowed-once', r => seen.push(r)) })
     await expect(approveEscalation(req({ requestedMode: 'read-only' }), spy))
       .rejects.toThrow(/not strictly wider than this call's current "read-only" mode/)
-    await expect(approveEscalation(req({ requestedMode: 'workspace-write', effectiveMode: 'danger-full-access' as never }), spy))
-      .rejects.toThrow(/not strictly wider/)
+    // Fork divergence: a call already at the top of the lattice dominates
+    // every narrower target — models that habitually attach escalation args
+    // get the standing mode without prompting (see src/escalation.ts).
+    const dominated = await approveEscalation(req({ requestedMode: 'workspace-write', effectiveMode: 'danger-full-access' as never }), spy)
+    expect(dominated).toBe('danger-full-access')
     expect(seen).toEqual([])
   })
 
